@@ -10,9 +10,15 @@ interface Props {
   title: string;
   description: string;
   jsonLd?: Record<string, unknown>[];
+  ogImageAlt?: string;
 }
 
-const { title, description, jsonLd = [] } = Astro.props;
+const {
+  title,
+  description,
+  jsonLd = [],
+  ogImageAlt = 'Timezone Prime time zone converter showing two clocks over a day ribbon of working hours',
+} = Astro.props;
 const site = Astro.site ?? new URL('https://timezoneprime.com');
 const canonical = new URL(Astro.url.pathname, site).href;
 const ogImage = new URL('/og.png', site).href;
@@ -31,6 +37,8 @@ const ogImage = new URL('/og.png', site).href;
     </script>
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="application-name" content="Timezone Prime" />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -39,14 +47,21 @@ const ogImage = new URL('/og.png', site).href;
     <meta name="theme-color" content="#070b14" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Timezone Prime" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:secure_url" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
     {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
   </head>
   <body class="flex flex-col overflow-x-clip antialiased">

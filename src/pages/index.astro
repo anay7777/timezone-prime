@@ -10,6 +10,42 @@ const description =
   'Convert time between any two time zones with correct daylight saving, date changes and real zone boundaries on an interactive world map. Free, fast, no sign-up.';
 const groups = pairsBySource();
 const site = 'https://timezoneprime.com';
+const ogImageAlt = 'Timezone Prime converting India Standard Time to New York time, with a day ribbon of working hours in both zones';
+
+const faqs: { q: string; a: string }[] = [
+  {
+    q: 'Is the time zone converter free?',
+    a: "Yes. There's no account to create and no limit on how many conversions you run. Everything is worked out in your browser.",
+  },
+  {
+    q: 'Does it account for daylight saving time?',
+    a: "Yes, for every date. The offset comes from the rules in force on the date you pick, not from today's offset, so a conversion for next March or last November uses the clocks that apply on that day.",
+  },
+  {
+    q: 'What is the difference between UTC and GMT?',
+    a: "For converting times there is none: both have a zero offset. UTC is the time standard kept by atomic clocks. GMT is the name of the time zone the UK uses in winter, and that Iceland and several West African countries use all year. In summer the UK is not on GMT but on BST, one hour ahead.",
+  },
+  {
+    q: 'How many time zones are there?',
+    a: 'In theory there are 24 one-hour bands. In practice about 38 different offsets are in use, from UTC-12 to UTC+14, including the half-hour and 45-minute ones. The IANA database splits these into several hundred named zones, because places that share an offset today may have had different rules in the past or may change their clocks on different dates.',
+  },
+  {
+    q: 'Why does the time difference between two cities change during the year?',
+    a: 'Because at least one of them observes daylight saving time, or both do but switch on different dates. New York and London, for example, are five hours apart for most of the year and four hours apart for a few weeks in March and around the start of November.',
+  },
+  {
+    q: 'Can I convert a time in the past or the future?',
+    a: "Yes. Pick a date with the calendar or the day arrows and the converter applies the rules for that date. Future dates use the rules that are currently scheduled. If a government changes them later, the result updates once your browser's time zone data does.",
+  },
+  {
+    q: 'What does "Next day" mean under the second clock?',
+    a: 'It means the second zone has already reached the following calendar date at the moment you are converting. "Previous day" means it is still on the day before. This happens often between Asia or Australia and the Americas.',
+  },
+  {
+    q: 'Does the converter work without JavaScript?',
+    a: 'The live converter and the map need JavaScript. The pages for each pair still show their reference tables, the periods when the gap changes and the upcoming clock change dates without it.',
+  },
+];
 
 const jsonLd = [
   {
@@ -17,22 +53,42 @@ const jsonLd = [
     '@type': 'WebSite',
     name: 'Timezone Prime',
     url: `${site}/`,
+    description,
+    inLanguage: 'en',
   },
   {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'Timezone Prime time zone converter',
     url: `${site}/`,
+    image: `${site}/og.png`,
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
+    inLanguage: 'en',
+    isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    featureList: [
+      'Convert time between any two IANA time zones',
+      'Daylight saving time applied for the selected date',
+      'Warnings for skipped and repeated times at clock changes',
+      'Day ribbon showing 9 to 5 working hours in both zones',
+      'Hour-by-hour comparison table with shared working hours',
+      'Interactive world map with real time zone boundaries',
+      '12-hour and 24-hour formats',
+      'Shareable links that keep both zones, the date and the time',
+    ],
     description,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
   },
 ];
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+<BaseLayout title={title} description={description} jsonLd={jsonLd} ogImageAlt={ogImageAlt}>
   <div class="hero-ground">
     <div class="container-page pt-6 sm:pt-14">
       <div class="max-w-2xl">
@@ -101,6 +157,258 @@ const jsonLd = [
           <dd class="mt-2 text-[0.9375rem]">Copy link saves both zones, the date and the time, so a meeting invite opens on the exact moment.</dd>
         </div>
       </dl>
+    </div>
+  </section>
+
+  <section id="guide" class="container-page mt-24 scroll-mt-20 sm:mt-32" aria-labelledby="guide-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="guide-heading" class="text-heading">How to use the time zone converter</h2>
+        <p class="mt-3 text-[0.9375rem]">
+          The converter opens on India Standard Time and New York because that is one of the pairs people look up most, but both sides can be any
+          zone in the world.
+        </p>
+      </div>
+      <div class="grid max-w-2xl gap-10">
+        <div>
+          <h3 class="text-title">Pick the two zones</h3>
+          <p class="mt-3">
+            Click the zone under From or To and start typing. You can search by city (Chicago, Lagos, Kathmandu), by abbreviation (PST, CET,
+            AEST), by the full name (Gulf Standard Time) or by offset (+5:45). The popular zones come first, and the rest of the list covers every
+            IANA zone your browser supports, which is several hundred of them.
+          </p>
+          <p class="mt-3">
+            The arrow button between the two clocks swaps them. That's quicker than picking both zones again when you need the reverse
+            conversion, say PST to IST after IST to PST.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Set the time and the date</h3>
+          <p class="mt-3">
+            Click either clock and type the time you have in mind, such as 2:30 or 14:30, then press Enter. The up and down arrow keys move the time
+            in 15-minute steps, and holding Shift moves it an hour at a time. The AM or PM label beside the clock flips between the two halves of the
+            day.
+          </p>
+          <p class="mt-3">
+            You can type into either side, and the other clock follows. If a colleague in Sydney says "let's talk at 8 in the morning my time", put
+            8:00 AM on the Sydney side and read your own time off the other clock. There's no need to swap the zones first.
+          </p>
+          <p class="mt-3">
+            The date controls sit just under the clocks. The arrows step one day back or forward, and the date button opens a calendar. If you
+            leave the date alone you get today's answer, which can be an hour out for a meeting three weeks away if a clock change falls in
+            between. The Now button resets both clocks to the current minute.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Read the result</h3>
+          <p class="mt-3">
+            The line under the clocks says how far ahead or behind the second zone is on that date. Next to the second date, a small label reads
+            Same day, Next day or Previous day. That label is the part people miss most often when converting between Asia and the Americas, where
+            an evening call on one side is the next morning on the other.
+          </p>
+          <p class="mt-3">
+            Below that, each side shows the zone's full name, its UTC offset on that date, whether it is on standard or daylight saving time, and
+            its IANA identifier. The 12h and 24h switch changes how every time on the page is written, and the site remembers your choice for
+            the next visit.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="planning-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="planning-heading" class="text-heading">Planning a meeting across time zones</h2>
+        <p class="mt-3 text-[0.9375rem]">
+          Converting one time is easy. Finding an hour that suits both people is the harder part, and that's what the day ribbon and the hourly
+          table are for.
+        </p>
+      </div>
+      <div class="grid max-w-2xl gap-10">
+        <div>
+          <h3 class="text-title">The day ribbon</h3>
+          <p class="mt-3">
+            The two strips under the date show a full day in each zone, and the lit band on each strip is that zone's 9 AM to 5 PM. Where the two
+            bands line up, both people are at work. Drag the handle along the ribbon and both clocks move together in 15-minute steps, so you can
+            slide through the day and see exactly where one side runs into the evening.
+          </p>
+          <p class="mt-3">
+            For zones close together, like London and Berlin, the bands overlap for most of the day. For zones far apart, like Los Angeles and
+            Bangalore, they barely touch or don't meet at all, and the real decision is which side starts early or stays late.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Hour by hour</h3>
+          <p class="mt-3">
+            Further up the page there's a table with every hour of the chosen day side by side. Rows where both zones are inside working hours are
+            shaded, and the line beside the table tells you how much of the day overlaps. Click any row to load that time into the converter.
+          </p>
+          <p class="mt-3">
+            On the day a zone changes its clocks, the table has 23 or 25 rows instead of 24, because that is how many hours the day really has
+            there. It's a quick way to spot a clock change you didn't know was coming.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">When there's no good slot</h3>
+          <p class="mt-3">
+            Once the gap passes about eight hours, no time is comfortable for everyone. Teams split between India and the US West Coast, or
+            between Europe and Australia, usually end up with one side on an early call and the other on a late one. Taking turns is fairer than
+            always asking the same office to stay up. The ribbon makes the trade visible: move the handle an hour either way and you can see who
+            pays for it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="pitfalls-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="pitfalls-heading" class="text-heading">Why time zone conversion goes wrong</h2>
+        <p class="mt-3 text-[0.9375rem]">
+          Most mistakes come from treating a time zone as a fixed number of hours from UTC. For much of the world it isn't, and the converter is
+          built around that.
+        </p>
+      </div>
+      <div class="grid max-w-2xl gap-10">
+        <div>
+          <h3 class="text-title">Daylight saving starts on different dates</h3>
+          <p class="mt-3">
+            The United States moves its clocks forward on the second Sunday in March and back on the first Sunday in November. The UK and the
+            European Union switch on the last Sunday in March and the last Sunday in October. So for two or three weeks in March, and again for
+            about a week around the start of November, New York is four hours behind London instead of the usual five. A meeting set up by "just
+            subtracting five" lands an hour off in those weeks. You can see the shifting gap on the <a href="/uk-to-est/" class="link"
+              >UK to EST</a
+            > and <a href="/cet-to-est/" class="link">CET to EST</a> pages.
+          </p>
+          <p class="mt-3">
+            The southern hemisphere runs the other way. Sydney and Melbourne go onto daylight time in early October and come off in early April,
+            so the gap between Sydney and London moves between 9 and 11 hours over the year. Queensland, just to the north, doesn't change its
+            clocks at all, which puts Brisbane on the same time as Sydney for half the year and an hour behind it for the other half.
+          </p>
+          <p class="mt-3">
+            Many countries don't use daylight saving at all. India, Japan, China, Singapore, the UAE and Pakistan stay on one offset all year.
+            That is why the difference between India and New York moves between 9 hours 30 minutes and 10 hours 30 minutes even though India's
+            clocks never change. The <a href="/ist-to-est/" class="link">IST to EST</a> page lists the exact dates.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">The rules keep changing</h3>
+          <p class="mt-3">
+            Governments change their time zone rules more often than most people realise. Mexico dropped daylight saving for most of the country
+            in 2022. Kazakhstan moved to a single time zone in 2024. Samoa jumped across the International Date Line at the end of 2011 and skipped
+            30 December entirely. A converter that stores one fixed offset per country gets cases like these wrong without anyone noticing.
+          </p>
+          <p class="mt-3">
+            This one uses the IANA time zone database, the same source used by phones, operating systems and most programming languages. Each
+            zone is a named region such as America/New_York or Asia/Kolkata with a full history of its offsets. A date in the past gets the rules
+            that applied then, and a date next year gets the rules that are scheduled. The conversion runs in your browser against its built-in
+            copy of that database, so keeping your browser up to date keeps the rules current.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Abbreviations are ambiguous</h3>
+          <p class="mt-3">
+            CST can mean Central Standard Time in North America, China Standard Time or Cuba Standard Time. IST is used for India, Israel and
+            Ireland. BST is British Summer Time to most people and Bangladesh Standard Time to others. People also say EST all year when they mean
+            Eastern Time, even though New York is on EDT from March to November.
+          </p>
+          <p class="mt-3">
+            Search accepts abbreviations, but the zone the converter works with is always a named place. Pick Eastern Time and you get New York's
+            rules, with EST in winter and EDT in summer, which is almost always what someone means when they write "EST". The full name and IANA
+            identifier under each clock show exactly which zone you're looking at.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Not every offset is a whole hour</h3>
+          <p class="mt-3">
+            India is 5 hours 30 minutes ahead of UTC. Nepal is 5:45 ahead, Newfoundland is 3:30 behind, the Northern Territory of Australia is
+            9:30 ahead, and New Zealand's Chatham Islands run 12:45 ahead in their winter. Mental arithmetic tends to slip on these, especially when
+            the answer also crosses midnight. The converter treats them like any other offset, as you can check on the <a
+              href="/utc-to-ist/"
+              class="link">UTC to IST</a
+            > page.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-title">Clock changes create times that don't exist</h3>
+          <p class="mt-3">
+            When clocks spring forward in New York at 2:00 AM, they go straight to 3:00 AM, so a time like 2:30 AM never happens there on that
+            date. If you type one, the converter says so and moves it to the first real time after the gap.
+          </p>
+          <p class="mt-3">
+            In autumn the opposite happens. The hour from 1:00 to 1:59 AM occurs twice, once on daylight time and once on standard time. The
+            converter shows the first and tells you which abbreviation the second one uses, so you can decide which one you meant before sending
+            an invite.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="boundaries-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="boundaries-heading" class="text-heading">Real zone boundaries on the map</h2>
+      <div class="grid max-w-2xl gap-3">
+        <p>
+          Country borders and time zone borders are not the same thing, and a map that colours whole countries hides the cases that cause the most
+          confusion. The map above draws more than 400 zone areas from the timezone-boundary-builder project, which is built on OpenStreetMap
+          data.
+        </p>
+        <p>
+          A few you can find on it: most of Arizona stays on Mountain Standard Time all year, while the Navajo Nation in the north-east of the
+          state follows daylight saving. Several Indiana counties near Chicago and Evansville use Central Time while the rest of the state uses
+          Eastern. Quintana Roo, the Mexican state that includes Canc&uacute;n, sits an hour ahead of Mexico City all year. China keeps a single time
+          zone across a country wide enough for five.
+        </p>
+        <p>
+          The two zones you've selected are shaded in their own colours. Lighter shading marks zones that share the same UTC offset right now but
+          follow different rules, usually because they change their clocks on other dates or not at all. Hover over any region to see its local
+          time, or click it to open its details and load it with Use as From or Use as To. Drag to pan, and pinch or hold Ctrl and scroll to zoom. From the keyboard, plus
+          and minus zoom, the arrow keys pan and zero resets the view.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="sharing-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="sharing-heading" class="text-heading">Sharing a converted time</h2>
+      <div class="grid max-w-2xl gap-3">
+        <p>
+          Copy link puts both zones, the date and the time into the page address. Paste it into a calendar invite or a chat, and whoever opens it
+          sees the same moment in both zones. That's more reliable than writing "3 PM my time" and leaving the other person to do the sums,
+          especially in the weeks around a clock change.
+        </p>
+        <p>
+          The most common pairs also have their own pages, listed above under All conversions. Each one has a reference table of common times,
+          the periods when the gap changes this year and next, the upcoming clock changes in both zones and a suggested meeting window. Some of
+          the most used are <a href="/ist-to-est/" class="link">IST to EST</a>, <a href="/est-to-pst/" class="link">EST to PST</a>, <a
+            href="/pst-to-ist/"
+            class="link">PST to IST</a
+          >, <a href="/uk-to-est/" class="link">UK time to EST</a>, <a href="/utc-to-ist/" class="link">UTC to IST</a> and <a
+            href="/est-to-aest/"
+            class="link">EST to AEST</a
+          >.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="container-page mt-24 scroll-mt-20 sm:mt-32" aria-labelledby="faq-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="faq-heading" class="text-heading">Time zone questions, answered</h2>
+      <div class="grid gap-6">
+        {
+          faqs.map((f) => (
+            <div class="border-b border-rule-2 pb-6">
+              <h3 class="font-medium">{f.q}</h3>
+              <p class="mt-2 text-[0.9375rem]">{f.a}</p>
+            </div>
+          ))
+        }
+      </div>
     </div>
   </section>
 </BaseLayout>
