@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Something went wrong | Timezone Prime"
+  description="The server ran into a problem loading this page. Try again in a moment or go back to the time zone converter."
+  noindex
+>
+  <div class="container-page pt-16 sm:pt-24">
+    <p class="font-mono text-sm text-muted">Error 500</p>
+    <h1 class="mt-2 text-[2.25rem] leading-[1.05] tracking-[-0.045em] sm:text-display">Something went wrong</h1>
+    <p class="mt-4 max-w-xl text-lg">
+      The server ran into a problem loading this page. It is usually temporary, so reloading in a moment should fix it.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <button type="button" class="btn btn-primary" onclick="location.reload()">Try again</button>
+      <a href="/" class="btn">Open the converter</a>
+    </div>
+  </div>
+</BaseLayout>

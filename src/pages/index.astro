@@ -4,6 +4,9 @@ import Converter from '../components/Converter.astro';
 import WorldMap from '../components/WorldMap.astro';
 import HourTable from '../components/HourTable.astro';
 import { pairsBySource } from '../data/pairs';
+import { offsetsSummary } from '../lib/pair-content';
+import { generalFaqs, zoneGlance } from '../lib/general-faqs';
+import { allZoneKeywords, generalKeywords, landingMetaKeywords } from '../lib/seo';
 
 const title = 'Time Zone Converter with Daylight Saving | Timezone Prime';
 const description =
@@ -12,40 +15,9 @@ const groups = pairsBySource();
 const site = 'https://timezoneprime.com';
 const ogImageAlt = 'Timezone Prime converting India Standard Time to New York time, with a day ribbon of working hours in both zones';
 
-const faqs: { q: string; a: string }[] = [
-  {
-    q: 'Is the time zone converter free?',
-    a: "Yes. There's no account to create and no limit on how many conversions you run. Everything is worked out in your browser.",
-  },
-  {
-    q: 'Does it account for daylight saving time?',
-    a: "Yes, for every date. The offset comes from the rules in force on the date you pick, not from today's offset, so a conversion for next March or last November uses the clocks that apply on that day.",
-  },
-  {
-    q: 'What is the difference between UTC and GMT?',
-    a: "For converting times there is none: both have a zero offset. UTC is the time standard kept by atomic clocks. GMT is the name of the time zone the UK uses in winter, and that Iceland and several West African countries use all year. In summer the UK is not on GMT but on BST, one hour ahead.",
-  },
-  {
-    q: 'How many time zones are there?',
-    a: 'In theory there are 24 one-hour bands. In practice about 38 different offsets are in use, from UTC-12 to UTC+14, including the half-hour and 45-minute ones. The IANA database splits these into several hundred named zones, because places that share an offset today may have had different rules in the past or may change their clocks on different dates.',
-  },
-  {
-    q: 'Why does the time difference between two cities change during the year?',
-    a: 'Because at least one of them observes daylight saving time, or both do but switch on different dates. New York and London, for example, are five hours apart for most of the year and four hours apart for a few weeks in March and around the start of November.',
-  },
-  {
-    q: 'Can I convert a time in the past or the future?',
-    a: "Yes. Pick a date with the calendar or the day arrows and the converter applies the rules for that date. Future dates use the rules that are currently scheduled. If a government changes them later, the result updates once your browser's time zone data does.",
-  },
-  {
-    q: 'What does "Next day" mean under the second clock?',
-    a: 'It means the second zone has already reached the following calendar date at the moment you are converting. "Previous day" means it is still on the day before. This happens often between Asia or Australia and the Americas.',
-  },
-  {
-    q: 'Does the converter work without JavaScript?',
-    a: 'The live converter and the map need JavaScript. The pages for each pair still show their reference tables, the periods when the gap changes and the upcoming clock change dates without it.',
-  },
-];
+const now = Date.now();
+const glance = zoneGlance();
+const faqs = generalFaqs;
 
 const jsonLd = [
   {
@@ -55,6 +27,22 @@ const jsonLd = [
     url: `${site}/`,
     description,
     inLanguage: 'en',
+    keywords: generalKeywords.join(', '),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: `${site}/`,
+    description,
+    inLanguage: 'en',
+    isPartOf: { '@type': 'WebSite', name: 'Timezone Prime', url: `${site}/` },
+    about: glance.map((g) => ({
+      '@type': 'Thing',
+      name: g.zone.name,
+      alternateName: g.zone.dstAbbr ? `${g.zone.stdAbbr}/${g.zone.dstAbbr}` : g.zone.stdAbbr,
+    })),
+    keywords: [...generalKeywords, ...allZoneKeywords()].join(', '),
   },
   {
     '@context': 'https://schema.org',
@@ -80,20 +68,26 @@ const jsonLd = [
     ],
     description,
   },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-  },
 ];
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd} ogImageAlt={ogImageAlt}>
+<BaseLayout title={title} description={description} jsonLd={jsonLd} ogImageAlt={ogImageAlt} keywords={landingMetaKeywords()}>
   <div class="hero-ground">
     <div class="container-page pt-6 sm:pt-14">
       <div class="max-w-2xl">
         <h1 id="converter-heading" class="text-[1.875rem] leading-[1.05] tracking-[-0.035em] sm:text-display">Convert time across any two zones</h1>
         <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">Daylight saving, date changes and real zone boundaries, right for every date.</p>
+        <p class="mt-2 hidden text-sm text-muted" data-my-tz>Your time zone: <span class="text-ink" data-my-tz-name></span></p>
+        <script is:inline>
+          try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const el = document.querySelector('[data-my-tz]');
+            if (tz && el) {
+              el.querySelector('[data-my-tz-name]').textContent = tz.replace(/_/g, ' ');
+              el.classList.remove('hidden');
+            }
+          } catch {}
+        </script>
       </div>
       <div class="mt-5 sm:mt-8">
         <Converter from="Asia/Kolkata" to="America/New_York" headingId="converter-heading" />
@@ -133,6 +127,51 @@ const jsonLd = [
           </div>
         ))
       }
+    </div>
+  </section>
+
+  <section id="zones" class="container-page mt-24 scroll-mt-20 sm:mt-32" aria-labelledby="zones-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="zones-heading" class="text-heading">Time zones at a glance</h2>
+        <p class="mt-3 text-[0.9375rem]">
+          Which time zone is Chicago, Texas or Arizona in? The zones people convert most, with their offsets and the places that use them.
+        </p>
+      </div>
+      <div class="panel overflow-x-auto">
+        <table class="data-table min-w-[36rem]">
+          <caption class="sr-only">Popular time zones, their UTC offsets and where they are used</caption>
+          <thead>
+            <tr>
+              <th scope="col">Time zone</th>
+              <th scope="col">UTC offset</th>
+              <th scope="col">Used in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              glance.map((g) => (
+                <tr>
+                  <td class="font-medium">
+                    {g.pair ? (
+                      <a href={`/${g.pair.slug}/`} class="link">
+                        {g.zone.name}
+                      </a>
+                    ) : (
+                      g.zone.name
+                    )}
+                    <span class="block text-xs font-normal text-muted">
+                      {g.zone.dstAbbr ? `${g.zone.stdAbbr} / ${g.zone.dstAbbr}` : g.zone.stdAbbr}
+                    </span>
+                  </td>
+                  <td>{offsetsSummary(g.zone, now)}</td>
+                  <td>{g.places.length ? g.places.join(', ') : g.zone.places}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -398,7 +437,10 @@ const jsonLd = [
 
   <section id="faq" class="container-page mt-24 scroll-mt-20 sm:mt-32" aria-labelledby="faq-heading">
     <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-      <h2 id="faq-heading" class="text-heading">Time zone questions, answered</h2>
+      <div>
+        <h2 id="faq-heading" class="text-heading">Time zone questions, answered</h2>
+        <p class="mt-3 text-[0.9375rem]">Questions about specific pairs are on the <a href="/faq/" class="link">FAQ page</a>.</p>
+      </div>
       <div class="grid gap-6">
         {
           faqs.map((f) => (

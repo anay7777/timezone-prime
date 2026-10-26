@@ -80,16 +80,16 @@ export interface QuickRow {
   to: string[];
 }
 
-const QUICK_HOURS = [0, 6, 8, 9, 10, 12, 14, 15, 17, 18, 20, 22];
+const QUICK_MINUTES = [0, 6, 8, 9, 10, 12, 14, 15, 17, 18, 20, 22].map((h) => h * 60);
 
-function shiftLabel(totalMinutes: number): string {
+export function shiftLabel(totalMinutes: number): string {
   const dayOffset = Math.floor(totalMinutes / 1440);
   if (dayOffset === 1) return ' (next day)';
   if (dayOffset === -1) return ' (previous day)';
   return '';
 }
 
-function minutesLabel(totalMinutes: number): string {
+export function minutesLabel(totalMinutes: number): string {
   const m = ((totalMinutes % 1440) + 1440) % 1440;
   const h = Math.floor(m / 60);
   const min = m % 60;
@@ -97,10 +97,11 @@ function minutesLabel(totalMinutes: number): string {
   return `${h12}:${String(min).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
-export function quickRows(list: Season[]): QuickRow[] {
-  return QUICK_HOURS.map((h) => ({
-    from: formatHourLabel(h),
-    to: list.map((s) => `${minutesLabel(h * 60 + s.diff)}${shiftLabel(h * 60 + s.diff)}`),
+/** `minutes` are wall-clock times in the source zone, as minutes after midnight. */
+export function quickRows(list: Season[], minutes: number[] = QUICK_MINUTES): QuickRow[] {
+  return minutes.map((m) => ({
+    from: m % 60 ? minutesLabel(m) : formatHourLabel(m / 60),
+    to: list.map((s) => `${minutesLabel(m + s.diff)}${shiftLabel(m + s.diff)}`),
   }));
 }
 

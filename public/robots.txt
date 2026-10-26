@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://timezoneprime.com/sitemap-index.xml
+Sitemap: https://timezoneprime.com/sitemap.xml

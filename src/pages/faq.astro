@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pairsBySource } from '../data/pairs';
+import { faqPageJsonLd, generalFaqs } from '../lib/general-faqs';
+import { pairPageData, zoneLabel } from '../lib/pair-page';
+import { generalKeywords } from '../lib/seo';
+
+const site = 'https://timezoneprime.com';
+const title = 'Time Zone FAQ: Differences, Daylight Saving and Meeting Times | Timezone Prime';
+const description =
+  'Answers to common time zone questions: time differences, daylight saving changes, meeting times and conversions for IST, EST, PST, UTC, UK time and more.';
+const now = Date.now();
+
+const groups = pairsBySource().map(({ zone, pairs }) => ({
+  zone,
+  pairs: pairs.map((p) => ({ pair: p, faqs: pairPageData(p, now).faqs })),
+}));
+const total = generalFaqs.length + groups.reduce((n, g) => n + g.pairs.reduce((m, p) => m + p.faqs.length, 0), 0);
+
+const keywords = ['time zone faq', 'time zone questions', 'time difference', 'daylight saving time', ...generalKeywords];
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Time zone converter', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: 'FAQ', item: `${site}/faq/` },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: `${site}/faq/`,
+    description,
+    inLanguage: 'en',
+    isPartOf: { '@type': 'WebSite', name: 'Timezone Prime', url: `${site}/` },
+    keywords: keywords.join(', '),
+  },
+  faqPageJsonLd(generalFaqs),
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd} keywords={keywords}>
+  <div class="hero-ground">
+    <div class="container-page pt-4 sm:pt-10">
+      <nav aria-label="Breadcrumb" class="text-sm text-muted">
+        <ol class="flex flex-wrap items-center gap-2">
+          <li><a href="/" class="hover:text-ink hover:underline">Converter</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a href="/faq/" aria-current="page" class="text-ink">FAQ</a></li>
+        </ol>
+      </nav>
+      <div class="mt-3 max-w-3xl sm:mt-5">
+        <h1 class="text-[1.875rem] leading-[1.05] tracking-[-0.035em] sm:text-display">Time zone questions, answered</h1>
+        <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">
+          {total} answers on time differences, daylight saving and meeting times, worked out for {new Date(now).getUTCFullYear()}.
+        </p>
+      </div>
+      <nav aria-label="Jump to a zone" class="mt-6 pb-2">
+        <ul class="flex flex-wrap gap-1.5">
+          <li><a href="#general" class="chip">General</a></li>
+          {
+            groups.map(({ zone }) => (
+              <li>
+                <a href={`#from-${zone.slug}`} class="chip">
+                  {zoneLabel(zone)}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container-page">
+    <div class="mt-8 flex flex-wrap gap-2" data-faq-controls hidden>
+      <button type="button" class="btn btn-sm" data-faq-toggle="open">Expand all</button>
+      <button type="button" class="btn btn-sm" data-faq-toggle="close">Collapse all</button>
+    </div>
+  </div>
+
+  <section id="general" class="container-page mt-10 scroll-mt-20" aria-labelledby="general-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="general-heading" class="text-heading">General questions</h2>
+        <p class="mt-3 text-[0.9375rem]">How the converter works and how time zones behave.</p>
+      </div>
+      <div class="border-t border-rule-2">
+        {
+          generalFaqs.map((f) => (
+            <details class="faq-item">
+              <summary>
+                <h3>{f.q}</h3>
+              </summary>
+              <p class="faq-answer">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {
+    groups.map(({ zone, pairs }) => (
+      <section id={`from-${zone.slug}`} class="container-page mt-20 scroll-mt-20 sm:mt-24" aria-labelledby={`from-${zone.slug}-heading`}>
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div>
+            <h2 id={`from-${zone.slug}-heading`} class="text-heading">
+              From {zoneLabel(zone)}
+            </h2>
+            <p class="mt-3 text-[0.9375rem]">Converting {zone.name} to other zones.</p>
+          </div>
+          <div class="border-t border-rule-2">
+            {pairs.map(({ pair, faqs }) => (
+              <details class="faq-item faq-group">
+                <summary>
+                  <h3>
+                    {zoneLabel(pair.from)} to {zoneLabel(pair.to)}
+                    <span class="ml-2 font-sans text-sm font-normal text-muted">{faqs.length} questions</span>
+                  </h3>
+                </summary>
+                <div class="pb-6 pl-4 sm:pl-6">
+                  <div class="border-t border-rule-2">
+                    {faqs.map((f) => (
+                      <details class="faq-item">
+                        <summary>
+                          <h4>{f.q}</h4>
+                        </summary>
+                        <p class="faq-answer">{f.a}</p>
+                      </details>
+                    ))}
+                  </div>
+                  <a href={`/${pair.slug}/`} class="link mt-4 inline-block text-sm">
+                    Open the {zoneLabel(pair.from)} to {zoneLabel(pair.to)} converter
+                  </a>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    ))
+  }
+</BaseLayout>
+
+<script>
+  const controls = document.querySelector<HTMLElement>('[data-faq-controls]');
+  if (controls) {
+    controls.hidden = false;
+    controls.addEventListener('click', (e) => {
+      const button = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-faq-toggle]');
+      if (!button) return;
+      const open = button.dataset.faqToggle === 'open';
+      document.querySelectorAll<HTMLDetailsElement>('details.faq-item').forEach((d) => (d.open = open));
+    });
+  }
+</script>

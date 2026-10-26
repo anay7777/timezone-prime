@@ -5,19 +5,10 @@ import Converter from '../components/Converter.astro';
 import WorldMap from '../components/WorldMap.astro';
 import HourTable from '../components/HourTable.astro';
 import { pairs, pairPath, type Pair } from '../data/pairs';
-import type { Zone } from '../data/zones';
-import {
-  clockChanges,
-  differencePeriods,
-  meetingFor,
-  offsetsSummary,
-  periodLabel,
-  quickRows,
-  seasons,
-  yearStart,
-  type Season,
-} from '../lib/pair-content';
-import { formatDuration, formatDurationShort, yearOffsets } from '../lib/time';
+import { offsetsSummary, periodLabel } from '../lib/pair-content';
+import { aliasText, pairPageData, zoneLabel } from '../lib/pair-page';
+import { formatDurationShort } from '../lib/time';
+import { allPairKeywords, pairMetaKeywords } from '../lib/seo';
 
 export const getStaticPaths = (() => pairs.map((p) => ({ params: { pair: p.slug }, props: { pair: p } }))) satisfies GetStaticPaths;
 
@@ -29,89 +20,26 @@ const { pair } = Astro.props;
 const { from: A, to: B } = pair;
 const site = 'https://timezoneprime.com';
 
-const label = (z: Zone) => (z.abbr === 'UK' ? 'UK time' : z.abbr);
+const label = zoneLabel;
 const now = Date.now();
-const year = new Date(now).getUTCFullYear();
-
-const yearPeriods = differencePeriods(A, B, yearStart(A.tz, year), yearStart(A.tz, year + 1));
-const twoYearPeriods = differencePeriods(A, B, yearStart(A.tz, year), yearStart(A.tz, year + 2));
-const seasonList = seasons(yearPeriods);
-
-interface DiffGroup {
-  diff: number;
-  days: number;
-  toAbbrs: string[];
-  fromAbbrs: string[];
-}
-const diffGroups: DiffGroup[] = [];
-for (const s of seasonList) {
-  const g = diffGroups.find((d) => d.diff === s.diff);
-  if (g) {
-    g.days += s.days;
-    if (!g.toAbbrs.includes(s.toAbbr)) g.toAbbrs.push(s.toAbbr);
-    if (!g.fromAbbrs.includes(s.fromAbbr)) g.fromAbbrs.push(s.fromAbbr);
-  } else diffGroups.push({ diff: s.diff, days: s.days, toAbbrs: [s.toAbbr], fromAbbrs: [s.fromAbbr] });
-}
-diffGroups.sort((a, b) => b.days - a.days);
-const tableGroups = diffGroups.slice(0, 2);
-const main = diffGroups[0];
-
-const rel = (d: number) => (d === 0 ? 'the same as' : d > 0 ? 'ahead of' : 'behind');
-const relSentence = (s: Pick<Season, 'diff' | 'fromAbbr' | 'toAbbr'>) =>
-  s.diff === 0 ? `${s.toAbbr} and ${s.fromAbbr} show the same time` : `${s.toAbbr} is ${formatDuration(s.diff)} ${rel(s.diff)} ${s.fromAbbr}`;
-
-const groupSentence = (g: DiffGroup) =>
-  g.diff === 0 ? `${B.name} and ${A.name} show the same time` : `${B.name} is ${formatDuration(g.diff)} ${rel(g.diff)} ${A.name}`;
-
-const daysText = (days: number) => {
-  const d = Math.round(days);
-  if (d >= 360) return 'all year';
-  if (d >= 180) return `most of the year (${d} days in ${year})`;
-  if (d >= 28) return `about ${Math.round(d / 7)} weeks in ${year}`;
-  return `${d} days in ${year}`;
-};
-
-const differenceSummary =
-  diffGroups.length === 1
-    ? `${groupSentence(main)} all year.`
-    : `${relSentence(seasonList[0])} for ${daysText(seasonList[0].days)}. ${diffGroups
-        .slice(1)
-        .map((g) => `The gap is ${formatDuration(g.diff)} for ${daysText(g.days)}`)
-        .join('. ')}.`;
-
-const quick = quickRows(tableGroups.map((g) => ({ diff: g.diff, fromAbbr: '', toAbbr: '', days: g.days })));
-const meeting = meetingFor(main.diff);
-const changes = clockChanges([A, B], now, now + 548 * 24 * 3600 * 1000);
-
-const dstA = yearOffsets(A.tz, now).daylight !== null;
-const dstB = yearOffsets(B.tz, now).daylight !== null;
-const dstSummary =
-  dstA && dstB
-    ? `Both zones change their clocks, on ${changes.length ? 'the dates listed below' : 'different dates'}, so the gap can shift during the year.`
-    : dstA || dstB
-      ? `${(dstA ? A : B).name} changes its clocks twice a year; ${(dstA ? B : A).name} does not.`
-      : `Neither zone observes daylight saving time, so the difference never changes.`;
-
-const mainSeason = seasonList.find((s) => s.diff === main.diff)!;
-const seasonNote = diffGroups.length > 1 ? ` while ${mainSeason.fromAbbr === mainSeason.toAbbr ? mainSeason.fromAbbr : `${mainSeason.fromAbbr} and ${mainSeason.toAbbr}`} apply` : '';
-const meetingText = meeting.overlapHours
-  ? `Working days of 9 AM to 5 PM overlap from ${meeting.overlapFrom} ${mainSeason.fromAbbr}, which is ${meeting.overlapTo} ${mainSeason.toAbbr}${seasonNote}.`
-  : `Working days of 9 AM to 5 PM do not overlap. The least disruptive slot is around ${meeting.compromiseFrom} ${mainSeason.fromAbbr}, which is ${meeting.compromiseTo} ${mainSeason.toAbbr}${seasonNote}.`;
-
-const title = `${label(A)} to ${label(B)} Converter: ${A.name} to ${B.name}`;
-const description = `Convert ${A.name} to ${B.name} for any date. ${groupSentence(main)}${
-  diffGroups.length > 1 ? ` most of the year, ${formatDurationShort(diffGroups[1].diff)} at other times` : ''
-}. Daylight saving, hourly table and meeting times.`;
-
-const faqs: { q: string; a: string }[] = [
-  { q: `What is the time difference between ${label(A)} and ${label(B)}?`, a: differenceSummary },
-  { q: `What is a good meeting time for ${label(A)} and ${label(B)}?`, a: meetingText },
-  {
-    q: `Do ${A.name} and ${B.name} observe daylight saving time?`,
-    a: `${dstSummary} ${changes[0] ? `The next change is on ${changes[0].date} in ${changes[0].zone.name}.` : ''}`.trim(),
-  },
-  ...[A, B].filter((z) => z.note).map((z) => ({ q: `Which ${z.abbr} does this page use?`, a: z.note! })),
-];
+const {
+  seo,
+  year,
+  twoYearPeriods,
+  tableGroups,
+  daysText,
+  differenceSummary,
+  times,
+  quick,
+  changes,
+  dstSummary,
+  meetingText,
+  title,
+  description,
+  faqs,
+  citySample,
+} = pairPageData(pair, now);
+const keywords = seo ? pairMetaKeywords(seo.keywords) : [];
 
 const reverse = pairPath(B, A);
 const sameSource = pairs.filter((p) => p.from.slug === A.slug && p.slug !== pair.slug);
@@ -133,8 +61,25 @@ const jsonLd = [
     url: `${site}/${pair.slug}/`,
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
+    isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     description,
+    ...(seo && {
+      alternateName: seo.keywords.aliases
+        .filter((k) => !k.endsWith('converter'))
+        .map((k) => `${k.split(' to ').map((s) => s.toUpperCase()).join(' to ')} converter`),
+    }),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: `${site}/${pair.slug}/`,
+    description,
+    inLanguage: 'en',
+    isPartOf: { '@type': 'WebSite', name: 'Timezone Prime', url: `${site}/` },
+    about: [A, B].map((z) => ({ '@type': 'Thing', name: z.name, alternateName: aliasText(z) })),
+    ...(seo && { keywords: allPairKeywords(seo.keywords).join(', ') }),
   },
   {
     '@context': 'https://schema.org',
@@ -144,7 +89,7 @@ const jsonLd = [
 ];
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+<BaseLayout title={title} description={description} jsonLd={jsonLd} keywords={keywords}>
   <div class="hero-ground">
   <div class="container-page pt-4 sm:pt-10">
     <nav aria-label="Breadcrumb" class="text-sm text-muted">
@@ -158,7 +103,9 @@ const jsonLd = [
       <h1 id="converter-heading" class="text-[1.875rem] leading-[1.05] tracking-[-0.035em] sm:text-display">
         {label(A)} to {label(B)} converter
       </h1>
-      <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">Convert {A.name} to {B.name}, with daylight saving applied for the exact date you pick.</p>
+      <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">
+        Convert {A.name} ({aliasText(A)}) to {B.name} ({aliasText(B)}), with daylight saving applied for the exact date you pick.
+      </p>
     </div>
     <div class="mt-5 sm:mt-8">
       <Converter from={A.tz} to={B.tz} headingId="converter-heading" />
@@ -181,6 +128,13 @@ const jsonLd = [
         <dd class="mt-1.5 text-[0.9375rem] text-ink">{dstSummary}</dd>
       </div>
     </dl>
+    {
+      citySample.length > 0 && (
+        <p class="mt-6 text-[0.9375rem]">
+          The same conversion works for every city on these clocks, such as {citySample.map((c, i) => `${c.from} to ${c.to}${i < citySample.length - 2 ? ', ' : i === citySample.length - 2 ? ' and ' : ''}`)}.
+        </p>
+      )
+    }
   </div>
 
   <WorldMap from={A.tz} to={B.tz} heading={`Where ${label(A)} and ${label(B)} apply`} />
@@ -189,9 +143,9 @@ const jsonLd = [
   <section class="container-page mt-24 sm:mt-32" aria-labelledby="reference-heading">
     <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
       <div>
-        <h2 id="reference-heading" class="text-heading">Quick reference</h2>
+        <h2 id="reference-heading" class="text-heading">{label(A)} to {label(B)} conversion table</h2>
         <p class="mt-3 text-[0.9375rem]">
-          Common {label(A)} times and their {label(B)} equivalents.
+          {times.length ? `Every hour of the ${A.name} day, plus the common half hours,` : `Common ${label(A)} times`} and their {label(B)} equivalents.
           {tableGroups.length > 1 && ' The second column covers the part of the year when the clocks are on a different gap.'}
         </p>
       </div>
