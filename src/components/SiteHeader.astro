@@ -1,0 +1,66 @@
+---
+const path = Astro.url.pathname;
+const links = [
+  { href: '/', label: 'Converter', wide: true },
+  { href: '/#directory', label: 'All conversions', wide: false },
+];
+---
+
+<header class="sticky top-0 z-40 border-b border-rule bg-paper">
+  <div class="container-page flex h-14 items-center justify-between gap-3">
+    <a href="/" class="flex items-center gap-2 rounded-part font-display text-[1.0625rem] whitespace-nowrap tracking-tight text-ink" aria-label="Timezone Prime home">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" class="shrink-0">
+        <rect x="1" y="1" width="20" height="20" rx="6" class="fill-accent"></rect>
+        <path d="M5 9.5h12M5 13.5h12" class="stroke-accent-ink" stroke-width="1.6" stroke-linecap="round" opacity="0.55"></path>
+        <rect x="9.25" y="5" width="3.5" height="12" rx="1.25" class="fill-accent-ink"></rect>
+      </svg>
+      Timezone Prime
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2">
+      <nav aria-label="Main">
+        <ul class="flex items-center gap-1">
+          {
+            links.map((l) => (
+              <li class={l.wide ? 'hidden sm:block' : undefined}>
+                <a
+                  href={l.href}
+                  class="rounded-pill px-3 py-2 text-sm whitespace-nowrap text-muted transition-colors hover:bg-paper-3 hover:text-ink aria-[current=page]:text-ink"
+                  aria-current={path === l.href ? 'page' : undefined}
+                >
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <button
+        type="button"
+        class="flex min-h-10 items-center gap-2 rounded-pill pr-1 pl-3 text-sm text-muted hover:text-ink"
+        aria-pressed="true"
+        data-theme-toggle
+      >
+        <span class="hidden sm:inline">Dark</span>
+        <span class="sr-only sm:hidden">Dark mode</span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const KEY = 'tzp:theme';
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const root = document.documentElement;
+  const sync = () => button?.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
+  sync();
+  button?.addEventListener('click', () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(KEY, root.dataset.theme);
+    } catch {
+      /* storage unavailable */
+    }
+    sync();
+  });
+</script>

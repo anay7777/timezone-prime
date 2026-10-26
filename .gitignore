@@ -1,0 +1,9 @@
+dist/
+.astro/
+node_modules/
+.cache/
+.hallmark/shots/
+npm-debug.log*
+.env
+.env.*
+.DS_Store

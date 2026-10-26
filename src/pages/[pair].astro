@@ -1,0 +1,388 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Converter from '../components/Converter.astro';
+import WorldMap from '../components/WorldMap.astro';
+import HourTable from '../components/HourTable.astro';
+import { pairs, pairPath, type Pair } from '../data/pairs';
+import type { Zone } from '../data/zones';
+import {
+  clockChanges,
+  differencePeriods,
+  meetingFor,
+  offsetsSummary,
+  periodLabel,
+  quickRows,
+  seasons,
+  yearStart,
+  type Season,
+} from '../lib/pair-content';
+import { formatDuration, formatDurationShort, yearOffsets } from '../lib/time';
+
+export const getStaticPaths = (() => pairs.map((p) => ({ params: { pair: p.slug }, props: { pair: p } }))) satisfies GetStaticPaths;
+
+interface Props {
+  pair: Pair;
+}
+
+const { pair } = Astro.props;
+const { from: A, to: B } = pair;
+const site = 'https://timezoneprime.com';
+
+const label = (z: Zone) => (z.abbr === 'UK' ? 'UK time' : z.abbr);
+const now = Date.now();
+const year = new Date(now).getUTCFullYear();
+
+const yearPeriods = differencePeriods(A, B, yearStart(A.tz, year), yearStart(A.tz, year + 1));
+const twoYearPeriods = differencePeriods(A, B, yearStart(A.tz, year), yearStart(A.tz, year + 2));
+const seasonList = seasons(yearPeriods);
+
+interface DiffGroup {
+  diff: number;
+  days: number;
+  toAbbrs: string[];
+  fromAbbrs: string[];
+}
+const diffGroups: DiffGroup[] = [];
+for (const s of seasonList) {
+  const g = diffGroups.find((d) => d.diff === s.diff);
+  if (g) {
+    g.days += s.days;
+    if (!g.toAbbrs.includes(s.toAbbr)) g.toAbbrs.push(s.toAbbr);
+    if (!g.fromAbbrs.includes(s.fromAbbr)) g.fromAbbrs.push(s.fromAbbr);
+  } else diffGroups.push({ diff: s.diff, days: s.days, toAbbrs: [s.toAbbr], fromAbbrs: [s.fromAbbr] });
+}
+diffGroups.sort((a, b) => b.days - a.days);
+const tableGroups = diffGroups.slice(0, 2);
+const main = diffGroups[0];
+
+const rel = (d: number) => (d === 0 ? 'the same as' : d > 0 ? 'ahead of' : 'behind');
+const relSentence = (s: Pick<Season, 'diff' | 'fromAbbr' | 'toAbbr'>) =>
+  s.diff === 0 ? `${s.toAbbr} and ${s.fromAbbr} show the same time` : `${s.toAbbr} is ${formatDuration(s.diff)} ${rel(s.diff)} ${s.fromAbbr}`;
+
+const groupSentence = (g: DiffGroup) =>
+  g.diff === 0 ? `${B.name} and ${A.name} show the same time` : `${B.name} is ${formatDuration(g.diff)} ${rel(g.diff)} ${A.name}`;
+
+const daysText = (days: number) => {
+  const d = Math.round(days);
+  if (d >= 360) return 'all year';
+  if (d >= 180) return `most of the year (${d} days in ${year})`;
+  if (d >= 28) return `about ${Math.round(d / 7)} weeks in ${year}`;
+  return `${d} days in ${year}`;
+};
+
+const differenceSummary =
+  diffGroups.length === 1
+    ? `${groupSentence(main)} all year.`
+    : `${relSentence(seasonList[0])} for ${daysText(seasonList[0].days)}. ${diffGroups
+        .slice(1)
+        .map((g) => `The gap is ${formatDuration(g.diff)} for ${daysText(g.days)}`)
+        .join('. ')}.`;
+
+const quick = quickRows(tableGroups.map((g) => ({ diff: g.diff, fromAbbr: '', toAbbr: '', days: g.days })));
+const meeting = meetingFor(main.diff);
+const changes = clockChanges([A, B], now, now + 548 * 24 * 3600 * 1000);
+
+const dstA = yearOffsets(A.tz, now).daylight !== null;
+const dstB = yearOffsets(B.tz, now).daylight !== null;
+const dstSummary =
+  dstA && dstB
+    ? `Both zones change their clocks, on ${changes.length ? 'the dates listed below' : 'different dates'}, so the gap can shift during the year.`
+    : dstA || dstB
+      ? `${(dstA ? A : B).name} changes its clocks twice a year; ${(dstA ? B : A).name} does not.`
+      : `Neither zone observes daylight saving time, so the difference never changes.`;
+
+const mainSeason = seasonList.find((s) => s.diff === main.diff)!;
+const seasonNote = diffGroups.length > 1 ? ` while ${mainSeason.fromAbbr === mainSeason.toAbbr ? mainSeason.fromAbbr : `${mainSeason.fromAbbr} and ${mainSeason.toAbbr}`} apply` : '';
+const meetingText = meeting.overlapHours
+  ? `Working days of 9 AM to 5 PM overlap from ${meeting.overlapFrom} ${mainSeason.fromAbbr}, which is ${meeting.overlapTo} ${mainSeason.toAbbr}${seasonNote}.`
+  : `Working days of 9 AM to 5 PM do not overlap. The least disruptive slot is around ${meeting.compromiseFrom} ${mainSeason.fromAbbr}, which is ${meeting.compromiseTo} ${mainSeason.toAbbr}${seasonNote}.`;
+
+const title = `${label(A)} to ${label(B)} Converter: ${A.name} to ${B.name}`;
+const description = `Convert ${A.name} to ${B.name} for any date. ${groupSentence(main)}${
+  diffGroups.length > 1 ? ` most of the year, ${formatDurationShort(diffGroups[1].diff)} at other times` : ''
+}. Daylight saving, hourly table and meeting times.`;
+
+const faqs: { q: string; a: string }[] = [
+  { q: `What is the time difference between ${label(A)} and ${label(B)}?`, a: differenceSummary },
+  { q: `What is a good meeting time for ${label(A)} and ${label(B)}?`, a: meetingText },
+  {
+    q: `Do ${A.name} and ${B.name} observe daylight saving time?`,
+    a: `${dstSummary} ${changes[0] ? `The next change is on ${changes[0].date} in ${changes[0].zone.name}.` : ''}`.trim(),
+  },
+  ...[A, B].filter((z) => z.note).map((z) => ({ q: `Which ${z.abbr} does this page use?`, a: z.note! })),
+];
+
+const reverse = pairPath(B, A);
+const sameSource = pairs.filter((p) => p.from.slug === A.slug && p.slug !== pair.slug);
+const sameTarget = pairs.filter((p) => p.to.slug === B.slug && p.slug !== pair.slug && p.from.slug !== B.slug);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Time zone converter', item: `${site}/` },
+      { '@type': 'ListItem', position: 2, name: `${label(A)} to ${label(B)}`, item: `${site}/${pair.slug}/` },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: `${label(A)} to ${label(B)} converter`,
+    url: `${site}/${pair.slug}/`,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Any',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    description,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  },
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="hero-ground">
+  <div class="container-page pt-4 sm:pt-10">
+    <nav aria-label="Breadcrumb" class="text-sm text-muted">
+      <ol class="flex flex-wrap items-center gap-2">
+        <li><a href="/" class="hover:text-ink hover:underline">Converter</a></li>
+        <li aria-hidden="true">/</li>
+        <li><a href={`/${pair.slug}/`} aria-current="page" class="text-ink">{label(A)} to {label(B)}</a></li>
+      </ol>
+    </nav>
+    <div class="mt-3 max-w-3xl sm:mt-5">
+      <h1 id="converter-heading" class="text-[1.875rem] leading-[1.05] tracking-[-0.035em] sm:text-display">
+        {label(A)} to {label(B)} converter
+      </h1>
+      <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">Convert {A.name} to {B.name}, with daylight saving applied for the exact date you pick.</p>
+    </div>
+    <div class="mt-5 sm:mt-8">
+      <Converter from={A.tz} to={B.tz} headingId="converter-heading" />
+    </div>
+  </div>
+  </div>
+  <div class="container-page">
+
+    <dl class="mt-10 grid gap-x-10 gap-y-6 border-t border-rule pt-8 md:grid-cols-3">
+      <div>
+        <dt class="text-sm text-muted">Time difference</dt>
+        <dd class="mt-1.5 text-[0.9375rem] text-ink">{differenceSummary}</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-muted">Meeting window</dt>
+        <dd class="mt-1.5 text-[0.9375rem] text-ink">{meetingText}</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-muted">Daylight saving</dt>
+        <dd class="mt-1.5 text-[0.9375rem] text-ink">{dstSummary}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <WorldMap from={A.tz} to={B.tz} heading={`Where ${label(A)} and ${label(B)} apply`} />
+  <HourTable from={A.tz} to={B.tz} />
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="reference-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div>
+        <h2 id="reference-heading" class="text-heading">Quick reference</h2>
+        <p class="mt-3 text-[0.9375rem]">
+          Common {label(A)} times and their {label(B)} equivalents.
+          {tableGroups.length > 1 && ' The second column covers the part of the year when the clocks are on a different gap.'}
+        </p>
+      </div>
+      <div class="panel overflow-x-auto">
+        <table class="data-table">
+          <caption class="sr-only">{label(A)} to {label(B)} conversion table</caption>
+          <thead>
+            <tr>
+              <th scope="col">{A.name}</th>
+              {
+                tableGroups.map((g) => (
+                  <th scope="col">
+                    <span class="block text-ink">{g.toAbbrs.join(' or ')}</span>
+                    <span class="block text-xs font-normal">
+                      {formatDurationShort(g.diff)} {g.diff >= 0 ? 'ahead' : 'behind'}, {daysText(g.days)}
+                    </span>
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
+            {
+              quick.map((r) => (
+                <tr>
+                  <td class="font-medium">{r.from}</td>
+                  {r.to.map((t) => (
+                    <td>{t}</td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  {
+    twoYearPeriods.length > 1 && (
+      <section class="container-page mt-24 sm:mt-32" aria-labelledby="periods-heading">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div>
+            <h2 id="periods-heading" class="text-heading">
+              How the gap changes in {year} and {year + 1}
+            </h2>
+            <p class="mt-3 text-[0.9375rem]">Each row is a stretch of days with one constant difference, split at every clock change.</p>
+          </div>
+          <div class="panel overflow-x-auto">
+            <table class="data-table min-w-[34rem]">
+              <caption class="sr-only">
+                Time difference periods between {label(A)} and {label(B)}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Dates</th>
+                  <th scope="col">{label(A)}</th>
+                  <th scope="col">{label(B)}</th>
+                  <th scope="col">Difference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {twoYearPeriods.map((p) => (
+                  <tr>
+                    <td>{periodLabel(p)}</td>
+                    <td>{p.fromAbbr}</td>
+                    <td>{p.toAbbr}</td>
+                    <td>
+                      {p.diff === 0 ? 'Same time' : `${p.toAbbr} ${formatDurationShort(p.diff)} ${p.diff > 0 ? 'ahead' : 'behind'}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="changes-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="changes-heading" class="text-heading">Upcoming clock changes</h2>
+      {
+        changes.length ? (
+          <ol class="grid gap-3">
+            {changes.map((c) => (
+              <li class="grid gap-1 border-b border-rule-2 pb-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+                <span class="text-sm text-muted">{c.zone.name}</span>
+                <span class="text-[0.9375rem] text-ink">{c.text}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p class="text-[0.9375rem]">
+            Neither {A.name} nor {B.name} changes its clocks in the next 18 months.
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="zones-heading">
+    <h2 id="zones-heading" class="text-heading">About the two zones</h2>
+    <div class="mt-8 grid gap-10 md:grid-cols-2">
+      {
+        [A, B].map((z) => (
+          <article class="border-t border-rule pt-6">
+            <h3 class="text-title">
+              {z.name} <span class="font-normal text-muted">({z.dstAbbr ? `${z.stdAbbr} / ${z.dstAbbr}` : z.stdAbbr})</span>
+            </h3>
+            <p class="mt-3 text-[0.9375rem]">{z.about}</p>
+            <dl class="mt-5 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+              <dt class="text-muted">IANA zone</dt>
+              <dd class="font-mono text-[0.8125rem] text-ink">{z.tz}</dd>
+              <dt class="text-muted">Offset</dt>
+              <dd class="text-ink">{offsetsSummary(z, now)}</dd>
+              <dt class="text-muted">Used in</dt>
+              <dd class="text-ink">{z.places}</dd>
+              {z.cities.length > 0 && (
+                <>
+                  <dt class="text-muted">Major cities</dt>
+                  <dd class="text-ink">{z.cities.join(', ')}</dd>
+                </>
+              )}
+            </dl>
+            {z.note && <p class="mt-4 text-sm">{z.note}</p>}
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="faq-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="faq-heading" class="text-heading">{label(A)} and {label(B)}, answered</h2>
+      <div class="grid gap-6">
+        {
+          faqs.map((f) => (
+            <div class="border-b border-rule-2 pb-6">
+              <h3 class="font-medium">{f.q}</h3>
+              <p class="mt-2 text-[0.9375rem]">{f.a}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="related-heading">
+    <h2 id="related-heading" class="text-heading">Related conversions</h2>
+    <div class="mt-8 grid gap-10 md:grid-cols-2">
+      <div>
+        <h3 class="text-sm font-medium text-muted">From {A.name}</h3>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          {
+            reverse && (
+              <li>
+                <a href={reverse} class="chip border-ink">
+                  {label(B)} to {label(A)}
+                </a>
+              </li>
+            )
+          }
+          {
+            sameSource.map((p) => (
+              <li>
+                <a href={`/${p.slug}/`} class="chip">
+                  {label(p.from)} to {label(p.to)}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      {
+        sameTarget.length > 0 && (
+          <div>
+            <h3 class="text-sm font-medium text-muted">To {B.name}</h3>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              {sameTarget.map((p) => (
+                <li>
+                  <a href={`/${p.slug}/`} class="chip">
+                    {label(p.from)} to {label(p.to)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,333 @@
+---
+import { zones, zoneByTz } from '../data/zones';
+import { abbrAt } from '../lib/pair-content';
+import { clockParts, ribbonFor } from '../lib/ribbon';
+import {
+  dayShift,
+  describeDayShift,
+  describeDifference,
+  formatDate,
+  formatOffset,
+  isDaylightTime,
+  offsetMinutes,
+  resolveWallTime,
+  wallParts,
+  yearOffsets,
+  zoneName,
+} from '../lib/time';
+
+interface Props {
+  from: string;
+  to: string;
+  headingId?: string;
+}
+
+const { from, to, headingId } = Astro.props;
+
+const today = wallParts(from, Date.now());
+const instant = resolveWallTime(from, today.year, today.month, today.day, 9, 0).instant;
+
+function placeOf(tz: string) {
+  const zone = zoneByTz.get(tz);
+  if (zone) return zone.city.name;
+  const parts = tz.split('/');
+  return parts[parts.length - 1].replaceAll('_', ' ');
+}
+
+function side(tz: string) {
+  const zone = zoneByTz.get(tz);
+  const { daylight } = yearOffsets(tz, instant);
+  return {
+    tz,
+    clock: clockParts(instant, tz),
+    date: formatDate(instant, tz, false),
+    abbr: zone ? abbrAt(zone, instant) : zoneName(tz, instant, 'short'),
+    place: placeOf(tz),
+    name: zoneName(tz, instant, 'long'),
+    offset: formatOffset(offsetMinutes(tz, instant)),
+    dst: daylight === null ? 'No daylight saving time' : isDaylightTime(tz, instant) ? 'Daylight saving time' : 'Standard time',
+  };
+}
+
+const a = side(from);
+const b = side(to);
+const shift = describeDayShift(dayShift(instant, from, to));
+const diffText = `${b.abbr} is ${describeDifference(offsetMinutes(from, instant), offsetMinutes(to, instant))} ${a.abbr}.`;
+const ribbon = ribbonFor(from, to, today.year, today.month, today.day);
+const fromDate = formatDate(instant, from);
+
+const popular = zones.map((z) => ({ tz: z.tz, label: `${z.name} (${z.abbr === 'UK' ? 'London' : z.abbr})` }));
+const extra = [from, to].filter((tz) => !zoneByTz.has(tz));
+const sides = [
+  { key: 'from', label: 'From', data: a },
+  { key: 'to', label: 'To', data: b },
+] as const;
+---
+
+<section class="panel" data-converter data-from={from} data-to={to} aria-labelledby={headingId}>
+  <div class="relative grid grid-cols-2">
+    {
+      sides.map((s) => (
+        <div class:list={['min-w-0 pt-4 pb-5 sm:pt-6 sm:pb-6', s.key === 'from' ? 'pr-6 pl-3 sm:pr-10 sm:pl-6' : 'border-l border-rule pr-3 pl-6 sm:pr-6 sm:pl-10']} data-side={s.key}>
+          <span id={`tz-${s.key}-label`} class="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted">
+            <span class:list={['size-2 shrink-0 rounded-full', s.key === 'from' ? 'bg-from' : 'bg-to']} aria-hidden="true" />
+            {s.label}
+          </span>
+          <button
+            type="button"
+            id={`tz-${s.key}`}
+            class="zone-pick w-full text-left"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls={`tz-${s.key}-pop`}
+            aria-labelledby={`tz-${s.key}-label tz-${s.key}-face`}
+            data-zone-trigger={s.key}
+          >
+            <span id={`tz-${s.key}-face`} class="min-w-0">
+              <span class="block truncate text-[0.9375rem] leading-tight font-semibold text-ink" data-abbr={s.key}>
+                {s.data.abbr}
+              </span>
+              <span class="block truncate text-xs leading-tight text-muted" data-place={s.key}>
+                {s.data.place}
+              </span>
+            </span>
+          </button>
+          <div hidden>
+            <select data-zone={s.key} autocomplete="off" tabindex="-1" aria-hidden="true">
+              <optgroup label="Popular">
+                {popular.map((o) => (
+                  <option value={o.tz} selected={o.tz === s.data.tz}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+              {extra.length > 0 && (
+                <optgroup label="Selected">
+                  {extra.map((tz) => (
+                    <option value={tz} selected={tz === s.data.tz}>
+                      {tz.replaceAll('_', ' ')}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+
+          <div class="mt-4 flex min-w-0 items-baseline gap-1.5 sm:mt-5">
+            <input
+              type="text"
+              class="clock-input"
+              value={s.data.clock.digits}
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              enterkeyhint="done"
+              aria-label={`Time in ${s.data.place}. Type a time such as 2:30 or 14:30, then press Enter`}
+              aria-describedby="converter-note"
+              data-clock={s.key}
+            />
+            <button
+              type="button"
+              class="relative shrink-0 rounded-part px-1 text-sm font-semibold text-muted after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] hover:text-ink sm:text-title"
+              aria-label={`Switch ${s.data.place} between AM and PM`}
+              data-meridiem={s.key}
+            >
+              {s.data.clock.meridiem}
+            </button>
+          </div>
+          <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <span class="tabular" data-date-text={s.key}>
+              {s.data.date}
+            </span>
+            {s.key === 'to' && (
+              <span class="rounded-pill bg-paper-3 px-2 py-px text-xs font-medium text-ink-2" data-shift>
+                {shift}
+              </span>
+            )}
+          </p>
+        </div>
+      ))
+    }
+    <button
+      type="button"
+      class="btn btn-icon absolute top-[2.375rem] left-1/2 z-10 size-10 -translate-x-1/2 sm:top-12"
+      data-swap
+      aria-label="Swap the two time zones"
+      title="Swap time zones"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M11 2.5 13.5 5 11 7.5M13.5 5h-11M5 8.5 2.5 11 5 13.5M2.5 11h11" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+    {
+      sides.map((s) => (
+        <div
+          id={`tz-${s.key}-pop`}
+          class:list={[
+            'popover absolute inset-x-2 top-[5.75rem] z-30 sm:inset-x-auto sm:top-[6.5rem] sm:w-[25rem]',
+            s.key === 'from' ? 'sm:left-6' : 'sm:right-6',
+          ]}
+          role="dialog"
+          aria-label={`Choose the ${s.label} time zone`}
+          hidden
+          data-zone-pop={s.key}
+        >
+          <div class="border-b border-rule p-2">
+            <div class="relative">
+              <svg class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <circle cx="7" cy="7" r="4.75"></circle>
+                <path d="m10.5 10.5 3 3" stroke-linecap="round"></path>
+              </svg>
+              <input
+                type="text"
+                class="search-input"
+                role="combobox"
+                aria-expanded="true"
+                aria-autocomplete="list"
+                aria-controls={`tz-${s.key}-list`}
+                aria-label={`Search ${s.label} time zones`}
+                placeholder="Search a city, country or zone"
+                autocomplete="off"
+                spellcheck="false"
+                data-zone-search
+              />
+            </div>
+          </div>
+          <ul id={`tz-${s.key}-list`} role="listbox" aria-label="Time zones" class="max-h-[min(22rem,55vh)] overflow-y-auto overscroll-contain p-1.5" data-zone-list></ul>
+          <p class="border-t border-rule px-3 py-2 text-xs text-muted" data-zone-count aria-live="polite"></p>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="border-t border-rule px-3 pt-4 pb-5 sm:px-6">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="flex items-center gap-1">
+        <button type="button" class="btn btn-sm btn-icon size-9" data-day-step="-1" aria-label="Previous day">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8.5 3 4.5 7l4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <div class="relative">
+          <button type="button" class="btn btn-sm tabular" data-date-pick aria-haspopup="dialog" aria-expanded="false" aria-controls="date-pop">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="text-muted">
+              <rect x="2" y="3" width="12" height="11" rx="2"></rect>
+              <path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke-linecap="round"></path>
+            </svg>
+            <span data-date-label>{fromDate}</span>
+          </button>
+          <div id="date-pop" class="popover absolute top-full left-0 z-30 mt-2 w-[18.5rem] p-3" role="dialog" aria-label="Choose a date" hidden data-calendar>
+            <div class="flex items-center justify-between gap-2 pl-1">
+              <p class="text-sm font-medium text-ink" data-cal-title aria-live="polite"></p>
+              <div class="flex gap-1">
+                <button type="button" class="cal-nav" data-cal-step="-1" aria-label="Previous month">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8.5 3 4.5 7l4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <button type="button" class="cal-nav" data-cal-step="1" aria-label="Next month">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5.5 3 4 4-4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+              </div>
+            </div>
+            <table class="mt-2 w-full border-collapse" role="grid" data-cal-grid>
+              <thead>
+                <tr>
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d, i) => (
+                    <th scope="col" class="h-8 text-center text-xs font-normal text-muted" abbr={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i]}>
+                      {d}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody data-cal-body></tbody>
+            </table>
+            <div class="mt-2 flex items-center justify-between gap-2 border-t border-rule pt-3">
+              <button type="button" class="btn btn-sm" data-cal-today>Today</button>
+              <span class="truncate text-xs text-muted" data-cal-zone></span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-icon size-9" data-day-step="1" aria-label="Next day">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5.5 3 4 4-4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+      </div>
+      <p class="flex items-center gap-3 text-xs text-muted">
+        <span class="flex items-center gap-1.5"><span class="h-2 w-4 rounded-pill bg-from" aria-hidden="true"></span><span data-legend-abbr="from">{a.abbr}</span> 9 to 5</span>
+        <span class="flex items-center gap-1.5"><span class="h-2 w-4 rounded-pill bg-to" aria-hidden="true"></span><span data-legend-abbr="to">{b.abbr}</span> 9 to 5</span>
+      </p>
+    </div>
+
+    <div class="ribbon flex h-13 flex-col justify-center gap-1.5">
+      <div class="ribbon-strip mx-2.5" style={`background-image: ${ribbon.from}`} data-strip="from"></div>
+      <div class="ribbon-strip mx-2.5" style={`background-image: ${ribbon.to}`} data-strip="to"></div>
+      <input
+        type="range"
+        class="ribbon-range"
+        min="0"
+        max="1439"
+        step="15"
+        value={9 * 60}
+        aria-label={`Time of day in ${a.place}`}
+        data-scrub
+      />
+    </div>
+    <div class="relative mx-2.5 mt-2 h-8 text-[0.6875rem] leading-4 text-muted tabular" data-ticks aria-hidden="true">
+      {
+        ribbon.ticks.map((t) => (
+          <span class="absolute top-0 whitespace-nowrap" style={`left: ${t.position}%; transform: translateX(-${t.position}%)`}>
+            <span class="block text-ink-2">{t.fromLabel}</span>
+            <span class="block">{t.toLabel}</span>
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <dl class="grid grid-cols-2 border-t border-rule text-sm">
+    {
+      sides.map((s) => (
+        <div class:list={['grid min-w-0 content-start gap-0.5 px-3 py-4 sm:px-6', s.key === 'to' && 'border-l border-rule']}>
+          <dt class="sr-only">{s.label} zone</dt>
+          <dd class="min-w-0 text-ink" data-name={s.key}>
+            {s.data.name}
+          </dd>
+          <dt class="sr-only">Offset and clock</dt>
+          <dd class="min-w-0 text-muted">
+            <span class="tabular text-ink-2" data-offset={s.key}>
+              {s.data.offset}
+            </span>
+            <span aria-hidden="true"> · </span>
+            <span data-dst={s.key}>{s.data.dst}</span>
+          </dd>
+          <dt class="sr-only">IANA name</dt>
+          <dd class="min-w-0 truncate font-mono text-xs text-muted" data-iana={s.key}>
+            {s.data.tz}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <div class="grid gap-3 border-t border-rule px-3 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div class="min-w-0" aria-live="polite">
+      <p class="text-[0.9375rem] text-ink" data-diff>{diffText}</p>
+      <p id="converter-note" class="mt-1 hidden text-sm text-ink-2" data-note role="status"></p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn btn-sm btn-primary" data-now>Now</button>
+      <div class="seg" role="group" aria-label="Time format">
+        <button type="button" data-format="12" aria-pressed="true">12h</button>
+        <button type="button" data-format="24" aria-pressed="false">24h</button>
+      </div>
+      <button type="button" class="btn btn-sm" data-copy>Copy link</button>
+      <span class="min-h-5 text-sm text-muted" data-copy-status role="status"></span>
+    </div>
+  </div>
+  <noscript>
+    <p class="border-t border-rule px-6 py-4 text-sm">
+      The live converter needs JavaScript. The figures above show 9:00 AM on the day this page was built; the reference tables below work without it.
+    </p>
+  </noscript>
+</section>
+
+<script>
+  import { initConverter } from '../scripts/converter';
+  initConverter();
+</script>

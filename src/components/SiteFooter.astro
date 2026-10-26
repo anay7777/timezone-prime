@@ -1,0 +1,36 @@
+---
+import { pairs } from '../data/pairs';
+
+const featured = ['ist-to-est', 'est-to-ist', 'utc-to-ist', 'ist-to-pst', 'pst-to-ist', 'est-to-pst', 'ist-to-uk', 'est-to-uk']
+  .map((slug) => pairs.find((p) => p.slug === slug))
+  .filter((p) => p !== undefined);
+const year = new Date().getUTCFullYear();
+---
+
+<footer class="mt-24 border-t border-rule bg-paper-2">
+  <div class="container-page grid gap-10 py-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+    <div class="max-w-sm">
+      <p class="font-display text-title text-ink">Timezone Prime</p>
+      <p class="mt-3 text-sm">
+        Time zone conversion that follows the real IANA rules for every date, including daylight saving changes.
+      </p>
+    </div>
+    <div>
+      <h2 class="text-sm font-medium">Popular conversions</h2>
+      <ul class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+        {
+          featured.map((p) => (
+            <li>
+              <a href={`/${p.slug}/`} class="hover:text-ink hover:underline">
+                {p.from.abbr} to {p.to.abbr}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-rule-2">
+    <p class="container-page py-6 text-sm text-muted">&copy; {year} timezoneprime.com</p>
+  </div>
+</footer>

@@ -1,0 +1,62 @@
+---
+import '@fontsource-variable/instrument-sans';
+import '@fontsource-variable/figtree';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  jsonLd?: Record<string, unknown>[];
+}
+
+const { title, description, jsonLd = [] } = Astro.props;
+const site = Astro.site ?? new URL('https://timezoneprime.com');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL('/og.png', site).href;
+---
+
+<!doctype html>
+<html lang="en" class="overflow-x-clip" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <script is:inline>
+      try {
+        if (localStorage.getItem('tzp:theme') === 'light') document.documentElement.dataset.theme = 'light';
+      } catch {}
+    </script>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#070b14" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Timezone Prime" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+  </head>
+  <body class="flex flex-col overflow-x-clip antialiased">
+    <a
+      href="#main"
+      class="sr-only rounded-part bg-accent px-3 py-2 text-sm font-medium text-accent-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
+      >Skip to content</a
+    >
+    <SiteHeader />
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

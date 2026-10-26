@@ -1,0 +1,106 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Converter from '../components/Converter.astro';
+import WorldMap from '../components/WorldMap.astro';
+import HourTable from '../components/HourTable.astro';
+import { pairsBySource } from '../data/pairs';
+
+const title = 'Time Zone Converter with Daylight Saving | Timezone Prime';
+const description =
+  'Convert time between any two time zones with correct daylight saving, date changes and real zone boundaries on an interactive world map. Free, fast, no sign-up.';
+const groups = pairsBySource();
+const site = 'https://timezoneprime.com';
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Timezone Prime',
+    url: `${site}/`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Timezone Prime time zone converter',
+    url: `${site}/`,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    description,
+  },
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="hero-ground">
+    <div class="container-page pt-6 sm:pt-14">
+      <div class="max-w-2xl">
+        <h1 id="converter-heading" class="text-[1.875rem] leading-[1.05] tracking-[-0.035em] sm:text-display">Convert time across any two zones</h1>
+        <p class="mt-2 text-[0.9375rem] sm:mt-4 sm:text-lg">Daylight saving, date changes and real zone boundaries, right for every date.</p>
+      </div>
+      <div class="mt-5 sm:mt-8">
+        <Converter from="Asia/Kolkata" to="America/New_York" headingId="converter-heading" />
+      </div>
+    </div>
+  </div>
+
+  <WorldMap from="Asia/Kolkata" to="America/New_York" />
+  <HourTable from="Asia/Kolkata" to="America/New_York" />
+
+  <section id="directory" class="container-page mt-24 scroll-mt-20 sm:mt-32" aria-labelledby="directory-heading">
+    <div class="max-w-xl">
+      <h2 id="directory-heading" class="text-heading">All conversions</h2>
+      <p class="mt-3">A dedicated page for each popular pair, with reference tables, clock change dates and meeting times.</p>
+    </div>
+    <div class="mt-10 divide-y divide-rule border-y border-rule">
+      {
+        groups.map(({ zone, pairs }) => (
+          <div class="grid gap-3 py-4 sm:grid-cols-[14rem_minmax(0,1fr)] sm:items-center sm:gap-6">
+            <h3 class="text-title">
+              {zone.abbr === 'UK' ? 'UK time' : zone.abbr} to
+              <span class="ml-1 font-sans text-sm text-muted">{zone.name}</span>
+            </h3>
+            <ul class="flex flex-wrap gap-1.5">
+              {pairs.map((p) => (
+                <li>
+                  <a
+                    href={`/${p.slug}/`}
+                    aria-label={`${p.from.abbr} to ${p.to.abbr}`}
+                    class="chip"
+                  >
+                    {p.to.abbr}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-page mt-24 sm:mt-32" aria-labelledby="accuracy-heading">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <h2 id="accuracy-heading" class="text-heading">How the times stay right</h2>
+      <dl class="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+        <div>
+          <dt class="font-medium text-ink">Rules, not fixed offsets</dt>
+          <dd class="mt-2 text-[0.9375rem]">Every zone is an IANA identifier such as America/New_York, so each date gets the offset that was or will be in force.</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-ink">Clock changes handled</dt>
+          <dd class="mt-2 text-[0.9375rem]">A time skipped by spring forward is flagged and moved; a time that happens twice in autumn shows both readings.</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-ink">Real boundaries</dt>
+          <dd class="mt-2 text-[0.9375rem]">The map draws more than 400 zone areas, so Arizona, the Indiana counties on Central Time and Mexico’s Quintana Roo are shaded on their own rules.</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-ink">Links that keep the time</dt>
+          <dd class="mt-2 text-[0.9375rem]">Copy link saves both zones, the date and the time, so a meeting invite opens on the exact moment.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pairs } from '../data/pairs';
+
+const featured = pairs.slice(0, 12);
+---
+
+<BaseLayout title="Page not found | Timezone Prime" description="This page does not exist. Use the time zone converter or pick a popular conversion.">
+  <div class="container-page pt-16 sm:pt-24">
+    <h1 class="text-[2.25rem] leading-[1.05] tracking-[-0.045em] sm:text-display">This page does not exist</h1>
+    <p class="mt-4 text-lg">The link may be old or mistyped. The converter handles any pair of zones.</p>
+    <a href="/" class="btn btn-primary mt-8">Open the converter</a>
+    <ul class="mt-12 flex flex-wrap gap-2">
+      {
+        featured.map((p) => (
+          <li>
+            <a href={`/${p.slug}/`} class="chip">
+              {p.from.abbr} to {p.to.abbr}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

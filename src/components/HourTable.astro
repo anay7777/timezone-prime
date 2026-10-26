@@ -1,0 +1,62 @@
+---
+import { zoneByTz } from '../data/zones';
+import { abbrAt } from '../lib/pair-content';
+import { describeDayShift, formatLongDate, hourRows, wallParts, zoneName } from '../lib/time';
+
+interface Props {
+  from: string;
+  to: string;
+}
+
+const { from, to } = Astro.props;
+const now = Date.now();
+const p = wallParts(from, now);
+const rows = hourRows(from, to, p.year, p.month, p.day);
+const label = (tz: string) => {
+  const z = zoneByTz.get(tz);
+  return z ? `${z.city.name} (${abbrAt(z, now)})` : `${tz} (${zoneName(tz, now, 'short')})`;
+};
+---
+
+<section class="container-page mt-24 sm:mt-32" data-hours aria-labelledby="hours-heading">
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+    <div>
+      <h2 id="hours-heading" class="text-heading">Hour by hour</h2>
+      <p class="mt-3">
+        Every hour of <span data-hours-day>{formatLongDate(rows[0].instant, from)}</span>, side by side. Days with a clock change show
+        23 or 25 rows.
+      </p>
+      <p class="mt-4 text-[0.9375rem] text-ink" data-overlap aria-live="polite"></p>
+      <p class="mt-4 flex items-center gap-2 text-sm text-muted">
+        <span class="inline-block h-2.5 w-5 rounded-pill border border-accent-soft bg-accent-wash" aria-hidden="true"></span>
+        Shaded rows fall inside working hours in both places.
+      </p>
+    </div>
+    <div class="panel overflow-x-auto">
+      <table class="data-table min-w-[30rem]">
+        <caption class="sr-only">Hourly comparison of the two time zones. Choose a time to load it in the converter.</caption>
+        <thead>
+          <tr>
+            <th scope="col" data-hours-from>{label(from)}</th>
+            <th scope="col" data-hours-to>{label(to)}</th>
+            <th scope="col">Working hours</th>
+          </tr>
+        </thead>
+        <tbody data-hours-body>
+          {
+            rows.map((r) => (
+              <tr class={r.fromWorking && r.toWorking ? 'bg-accent-wash' : undefined}>
+                <td class="font-medium">{r.fromLabel}</td>
+                <td>
+                  {r.toLabel}
+                  {r.shift !== 0 && <span class="ml-2 text-xs text-muted">{describeDayShift(r.shift).toLowerCase()}</span>}
+                </td>
+                <td class="text-muted">{r.fromWorking && r.toWorking ? 'Both working' : ''}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
