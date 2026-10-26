@@ -1,12 +1,13 @@
 // Renders public/og.png, the 1200x630 social preview. Run: node scripts/build-og.mjs
+import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
+
+const logoPath = readFileSync('src/components/Logo.astro', 'utf8').match(/ d="([^"]+)"/)[1];
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#fafafa"/>
   <rect x="64" y="64" width="1072" height="502" rx="16" fill="#ffffff" stroke="#ebebeb" stroke-width="2"/>
-  <g transform="translate(120 128)" fill="none" stroke="#171717" stroke-width="3">
-    <circle cx="20" cy="20" r="17"/><path d="M20 3v34M3 20h34"/><path d="M20 3c5.4 4.7 8 10.3 8 17s-2.6 12.3-8 17"/>
-  </g>
+  <path transform="translate(120 128) scale(0.0385)" fill="#171717" fill-rule="evenodd" d="${logoPath}"/>
   <text x="176" y="158" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="600" fill="#171717">Timezone Prime</text>
   <text x="120" y="318" font-family="Geist, Inter, Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-3" fill="#171717">Convert time across</text>
   <text x="120" y="404" font-family="Geist, Inter, Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-3" fill="#171717">any two zones</text>

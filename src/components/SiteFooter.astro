@@ -1,5 +1,6 @@
 ---
 import { pairs } from '../data/pairs';
+import Logo from './Logo.astro';
 
 const featured = ['ist-to-est', 'est-to-ist', 'utc-to-ist', 'ist-to-pst', 'pst-to-ist', 'est-to-pst', 'ist-to-uk', 'est-to-uk']
   .map((slug) => pairs.find((p) => p.slug === slug))
@@ -10,7 +11,7 @@ const year = new Date().getUTCFullYear();
 <footer class="mt-24 border-t border-rule bg-paper-2">
   <div class="container-page grid gap-10 py-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
     <div class="max-w-sm">
-      <p class="font-display text-title text-ink">Timezone Prime</p>
+      <p class="flex items-center gap-2.5 font-display text-title text-ink"><Logo size={28} />Timezone Prime</p>
       <p class="mt-3 text-sm">
         Time zone conversion that follows the real IANA rules for every date, including daylight saving changes.
       </p>

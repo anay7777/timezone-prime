@@ -1,4 +1,6 @@
 ---
+import Logo from './Logo.astro';
+
 const path = Astro.url.pathname;
 const links = [
   { href: '/', label: 'Converter', wide: true },
@@ -9,11 +11,7 @@ const links = [
 <header class="sticky top-0 z-40 border-b border-rule bg-paper">
   <div class="container-page flex h-14 items-center justify-between gap-3">
     <a href="/" class="flex items-center gap-2 rounded-part font-display text-[1.0625rem] whitespace-nowrap tracking-tight text-ink" aria-label="Timezone Prime home">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" class="shrink-0">
-        <rect x="1" y="1" width="20" height="20" rx="6" class="fill-accent"></rect>
-        <path d="M5 9.5h12M5 13.5h12" class="stroke-accent-ink" stroke-width="1.6" stroke-linecap="round" opacity="0.55"></path>
-        <rect x="9.25" y="5" width="3.5" height="12" rx="1.25" class="fill-accent-ink"></rect>
-      </svg>
+      <Logo size={24} />
       Timezone Prime
     </a>
     <div class="flex items-center gap-1 sm:gap-2">
