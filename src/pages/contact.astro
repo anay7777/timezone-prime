@@ -1,0 +1,62 @@
+---
+import InfoLayout from '../layouts/InfoLayout.astro';
+import { contactEmail } from '../lib/site';
+
+const subjects = [
+  { label: 'Report a wrong time', subject: 'Wrong time on Timezone Prime' },
+  { label: 'Request a conversion page', subject: 'Conversion page request' },
+  { label: 'General question', subject: 'Question about Timezone Prime' },
+];
+---
+
+<InfoLayout
+  title="Contact Timezone Prime"
+  description="Contact Timezone Prime to report a wrong time, request a new conversion page or ask a question. We reply by email."
+  heading="Contact us"
+  lead="Report a wrong time, request a conversion page or ask a question. We reply by email, usually within two working days."
+  crumb="Contact"
+  path="/contact/"
+  pageType="ContactPage"
+>
+  <div class="panel p-6 sm:p-8">
+    <p class="text-sm text-muted">Email</p>
+    <p class="mt-1 font-display text-title break-all text-ink">
+      <a href={`mailto:${contactEmail}`} class="link">{contactEmail}</a>
+    </p>
+    <p class="mt-6 text-sm text-muted">Start a message about</p>
+    <ul class="mt-3 flex list-none flex-wrap gap-2 p-0">
+      {
+        subjects.map((s) => (
+          <li class="m-0">
+            <a href={`mailto:${contactEmail}?subject=${encodeURIComponent(s.subject)}`} class="chip">
+              {s.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <h2>Reporting a wrong time</h2>
+  <p>So we can check it quickly, please include:</p>
+  <ul>
+    <li>The page address, or the two zones you converted between.</li>
+    <li>The date and time you entered.</li>
+    <li>The result you saw and the result you expected.</li>
+    <li>Your browser and device, since conversions use the time zone data built into your browser.</li>
+  </ul>
+
+  <h2>Before you write</h2>
+  <p>
+    Many questions about time differences and daylight saving are answered in the <a href="/faq/" data-astro-reload
+      >FAQ</a
+    >. To learn how the converter works and where its data comes from, see <a href="/about/" data-astro-reload
+      >About us</a
+    >.
+  </p>
+  <p>
+    We only use your email address to reply to you. See the <a href="/privacy-policy/" data-astro-reload
+      >privacy policy</a
+    > for more.
+  </p>
+</InfoLayout>

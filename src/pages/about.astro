@@ -1,0 +1,61 @@
+---
+import InfoLayout from '../layouts/InfoLayout.astro';
+import { pairs } from '../data/pairs';
+---
+
+<InfoLayout
+  title="About Timezone Prime | Accurate Time Zone Converter"
+  description="Timezone Prime is a free time zone converter that follows the real IANA rules for every date, including daylight saving changes. Learn how it works and where the data comes from."
+  heading="About Timezone Prime"
+  lead="A free time zone converter built to give the right answer on any date, not just today."
+  crumb="About"
+  path="/about/"
+  pageType="AboutPage"
+>
+  <p>
+    Timezone Prime converts a time from one zone to another and shows both clocks over a ribbon of the day, so you can see
+    at a glance whose working hours overlap. It started as a tool for scheduling calls across India, Europe and North
+    America, where daylight saving shifts the difference twice a year and catches people out.
+  </p>
+
+  <h2>How the conversions work</h2>
+  <p>
+    Every calculation uses the <strong>IANA time zone database</strong>, the same rules your phone and computer use. The
+    database is built into your browser, so conversions run on your device and follow each region's daylight saving
+    dates for the exact day you pick, including past and future years.
+  </p>
+  <p>
+    Abbreviations such as EST, IST or CET are labels for people. Behind each one is a specific IANA zone, for example
+    <code>America/New_York</code> or <code>Asia/Kolkata</code>, and that zone decides the offset.
+  </p>
+
+  <h2>What you will find here</h2>
+  <ul>
+    <li>A converter for any pair of zones, with a date picker and a 12 or 24 hour clock.</li>
+    <li>{pairs.length} dedicated pages for common conversions, each with an hour-by-hour table.</li>
+    <li>A world map that highlights both zones and every place sharing their offset.</li>
+    <li>An <a href="/faq/" data-astro-reload>FAQ</a> covering time differences, daylight saving and meeting times.</li>
+  </ul>
+
+  <h2>Data and credits</h2>
+  <p>
+    Time zone rules come from the IANA tz database through your browser. Map boundaries come from
+    <a href="https://github.com/evansiroky/timezone-boundary-builder" rel="noopener" target="_blank"
+      >Timezone Boundary Builder</a
+    >, published under the Open Database License.
+  </p>
+
+  <h2>Privacy by design</h2>
+  <p>
+    There are no accounts, no ads and no tracking. Your theme and clock format are remembered in your own browser and
+    never sent to us. The <a href="/privacy-policy/" data-astro-reload>privacy policy</a> has the details.
+  </p>
+
+  <h2>Get in touch</h2>
+  <p>
+    Spotted a wrong offset or want a conversion page added? We read every message.
+  </p>
+  <p>
+    <a href="/contact/" class="btn btn-primary" data-astro-reload>Contact us</a>
+  </p>
+</InfoLayout>

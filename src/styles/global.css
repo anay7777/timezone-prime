@@ -775,6 +775,55 @@ html[data-theme='dark'] {
   }
 }
 
+@layer components {
+  /* long-form text pages: about, contact, privacy, terms */
+  .prose-page {
+    max-width: 44rem;
+    font-size: 1rem;
+  }
+  .prose-page > * + * {
+    margin-top: 1rem;
+  }
+  .prose-page h2 {
+    margin-top: 2.75rem;
+    font-size: var(--text-title);
+    letter-spacing: var(--text-title--letter-spacing);
+    line-height: var(--text-title--line-height);
+  }
+  .prose-page h2 + * {
+    margin-top: 0.75rem;
+  }
+  .prose-page ul {
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+  .prose-page li + li {
+    margin-top: 0.5rem;
+  }
+  .prose-page li::marker {
+    color: var(--color-faint);
+  }
+  .prose-page strong {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+  .prose-page code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    color: var(--color-ink-2);
+  }
+  .prose-page a:not(.btn) {
+    color: var(--color-ink);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+    text-decoration-color: var(--color-rule-strong);
+  }
+  .prose-page a:not(.btn):hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
 @utility container-page {
   width: 100%;
   max-width: var(--container-page);

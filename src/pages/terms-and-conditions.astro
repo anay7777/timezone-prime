@@ -1,0 +1,87 @@
+---
+import InfoLayout from '../layouts/InfoLayout.astro';
+import { contactEmail, legalUpdated, siteName } from '../lib/site';
+---
+
+<InfoLayout
+  title="Terms and Conditions | Timezone Prime"
+  description="The terms for using Timezone Prime, a free time zone converter: acceptable use, accuracy of conversions, intellectual property and limitation of liability."
+  heading="Terms and conditions"
+  lead="The rules for using Timezone Prime. Please read them, because using the site means you accept them."
+  crumb="Terms and conditions"
+  path="/terms-and-conditions/"
+  updated={legalUpdated}
+>
+  <p>
+    These terms apply to your use of {siteName} at timezoneprime.com ("the site", "we", "us"). If you do not agree with
+    them, please do not use the site.
+  </p>
+
+  <h2>Using the site</h2>
+  <p>
+    The site is free to use for personal and business purposes. You agree not to misuse it, which includes trying to
+    disrupt or overload it, scraping it in a way that degrades the service for others, or using it for anything
+    unlawful.
+  </p>
+
+  <h2>Accuracy of conversions</h2>
+  <p>
+    We work hard to make every conversion correct. Results are calculated from the IANA time zone database built into
+    your browser, so they depend on your browser being up to date. Governments sometimes change time zone or daylight
+    saving rules at short notice, and there may be a delay before those changes reach your device.
+  </p>
+  <p>
+    For anything where a wrong time would be costly, such as flights, legal deadlines, financial markets or medical
+    schedules, please confirm the time with an official source.
+  </p>
+
+  <h2>No warranty</h2>
+  <p>
+    The site is provided "as is" and "as available", without warranties of any kind, express or implied, including
+    accuracy, fitness for a particular purpose and uninterrupted availability. We may change, suspend or stop any part
+    of the site at any time.
+  </p>
+
+  <h2>Limitation of liability</h2>
+  <p>
+    To the fullest extent the law allows, {siteName} is not liable for any loss or damage arising from your use of the
+    site or reliance on its results, including missed meetings, travel or business losses. Nothing in these terms limits
+    liability that cannot be limited by law.
+  </p>
+
+  <h2>Intellectual property</h2>
+  <p>
+    The site's design, text and code belong to {siteName}. You are welcome to link to any page and to share results you
+    get from the converter. Please do not copy the site or republish large parts of its content without permission.
+  </p>
+  <p>
+    Map boundaries come from
+    <a href="https://github.com/evansiroky/timezone-boundary-builder" rel="noopener" target="_blank"
+      >Timezone Boundary Builder</a
+    > under the Open Database License, and time zone rules come from the public-domain IANA tz database.
+  </p>
+
+  <h2>Links to other websites</h2>
+  <p>
+    Links to other websites are provided for convenience. We do not control those sites and are not responsible for
+    their content.
+  </p>
+
+  <h2>Privacy</h2>
+  <p>
+    How we handle information is described in the <a href="/privacy-policy/" data-astro-reload>privacy policy</a>,
+    which forms part of these terms.
+  </p>
+
+  <h2>Changes to these terms</h2>
+  <p>
+    We may update these terms from time to time. The date at the top shows when they last changed. Continuing to use the
+    site after a change means you accept the updated terms.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about these terms can go to <a href={`mailto:${contactEmail}`}>{contactEmail}</a> or through the
+    <a href="/contact/" data-astro-reload>contact page</a>.
+  </p>
+</InfoLayout>

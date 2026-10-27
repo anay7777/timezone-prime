@@ -1,0 +1,91 @@
+---
+import InfoLayout from '../layouts/InfoLayout.astro';
+import { contactEmail, legalUpdated, siteName } from '../lib/site';
+---
+
+<InfoLayout
+  title="Privacy Policy | Timezone Prime"
+  description="How Timezone Prime handles your data: no accounts, no ads, no tracking cookies. Settings stay in your browser and conversions run on your device."
+  heading="Privacy policy"
+  lead="The short version: we do not track you, we do not sell anything about you, and your conversions never leave your device."
+  crumb="Privacy policy"
+  path="/privacy-policy/"
+  updated={legalUpdated}
+>
+  <p>
+    This policy explains what information {siteName} (timezoneprime.com, "we", "us") handles when you use the website,
+    and the choices you have.
+  </p>
+
+  <h2>Information we do not collect</h2>
+  <ul>
+    <li>We do not ask you to create an account or give us your name.</li>
+    <li>We do not use analytics, advertising or social media trackers.</li>
+    <li>We do not set cookies.</li>
+    <li>
+      The times, dates and zones you enter are converted inside your browser. They are not sent to us or stored on any
+      server.
+    </li>
+  </ul>
+
+  <h2>Settings stored in your browser</h2>
+  <p>
+    To remember your preferences between visits, the site saves two small values in your browser's local storage. They
+    stay on your device and are never sent to us.
+  </p>
+  <ul>
+    <li><code>tzp:theme</code> remembers whether you chose the light or dark colours.</li>
+    <li><code>tzp:hour12</code> remembers whether you prefer a 12 or 24 hour clock.</li>
+  </ul>
+  <p>You can remove them at any time by clearing this site's data in your browser settings.</p>
+
+  <h2>Your time zone</h2>
+  <p>
+    The converter reads your device's time zone setting so it can start from your local time. This happens in your
+    browser and the value is not sent to us.
+  </p>
+
+  <h2>Server logs</h2>
+  <p>
+    Like almost every website, our hosting provider automatically records basic technical details when a page is
+    requested, such as IP address, browser type, the page requested and the time of the request. These logs are used to
+    keep the site secure and running, are kept for a limited period, and are not used to identify or profile you.
+  </p>
+
+  <h2>When you email us</h2>
+  <p>
+    If you contact us, we receive your email address and whatever you include in your message. We use it only to reply
+    and to fix any problem you report. We do not add you to a mailing list or share your message with anyone else.
+  </p>
+
+  <h2>Links to other websites</h2>
+  <p>
+    Some pages link to other websites, such as the source of our map data. Those sites have their own privacy policies,
+    and we are not responsible for how they handle your information.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    The site is a general-purpose tool and is not directed at children under 13. We do not knowingly collect personal
+    information from children.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    Depending on where you live, laws such as the GDPR or CCPA may give you the right to access, correct or delete
+    personal information we hold about you. In practice the only personal information we may hold is an email you sent
+    us. To ask about it or have it deleted, write to <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+  </p>
+
+  <h2>Changes to this policy</h2>
+  <p>
+    If we change how the site handles information, we will update this page and the date at the top. If we ever add
+    analytics or advertising, this policy will say so before it goes live.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about privacy can go to <a href={`mailto:${contactEmail}`}>{contactEmail}</a> or through the
+    <a href="/contact/" data-astro-reload>contact page</a>.
+  </p>
+</InfoLayout>

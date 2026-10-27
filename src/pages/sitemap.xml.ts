@@ -14,6 +14,10 @@ export const GET: APIRoute = ({ site }) => {
   const entries: Entry[] = [
     { path: '/', changefreq: 'weekly', priority: 1 },
     { path: '/faq/', changefreq: 'monthly', priority: 0.7 },
+    { path: '/about/', changefreq: 'monthly', priority: 0.5 },
+    { path: '/contact/', changefreq: 'monthly', priority: 0.4 },
+    { path: '/privacy-policy/', changefreq: 'monthly', priority: 0.3 },
+    { path: '/terms-and-conditions/', changefreq: 'monthly', priority: 0.3 },
     ...pairs.map((p): Entry => ({ path: `/${p.slug}/`, changefreq: 'monthly', priority: pairSeo(p.slug) ? 0.9 : 0.8 })),
   ];
 
