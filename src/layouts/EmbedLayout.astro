@@ -1,8 +1,11 @@
 ---
-import '@fontsource-variable/instrument-sans';
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
 import '@fontsource-variable/figtree';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Wordmark from '../components/Wordmark.astro';
 import { siteUrl } from '../lib/site';
 
 interface Props {
@@ -47,8 +50,8 @@ const { title, baseWidth, baseHeight, creditPath = '/', creditLabel = 'Time zone
         class="widget-credit"
         data-widget-credit
       >
-        <span class="flex items-center gap-1.5 font-display text-[0.8125rem] tracking-tight text-ink">
-          <Logo size={15} class="h-[0.9375rem] w-[0.9375rem]" />Timezone Prime
+        <span class="flex items-center gap-1.5 text-[0.875rem]">
+          <Logo size={18} class="h-[1.125rem] w-[1.125rem]" /><Wordmark />
         </span>
         <span class="truncate" data-widget-credit-label>{creditLabel} &#8599;</span>
       </a>
