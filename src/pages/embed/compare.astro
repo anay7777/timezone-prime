@@ -1,0 +1,111 @@
+---
+import EmbedLayout from '../../layouts/EmbedLayout.astro';
+
+const sides = [
+  { key: 'from', label: 'New Delhi', color: 'text-from-ink', dot: 'bg-from' },
+  { key: 'to', label: 'New York', color: 'text-to-ink', dot: 'bg-to' },
+];
+---
+
+<EmbedLayout title="Time difference | Timezone Prime" baseWidth={520} baseHeight={252} creditLabel="Convert any time">
+  <div class="flex h-full flex-col">
+    <div class="grid grid-cols-2 gap-4">
+      {
+        sides.map((s, i) => (
+          <div class:list={['min-w-0', i === 1 && 'border-l border-rule pl-4']} data-side={s.key}>
+            <p class="flex items-center gap-1.5 text-[0.8125rem] font-medium">
+              <span class:list={['h-2 w-2 shrink-0 rounded-full', s.dot]}></span>
+              <span class:list={['truncate', s.color]} data-label>
+                {s.label}
+              </span>
+            </p>
+            <p class="mt-1 flex items-baseline gap-1 font-display leading-none text-ink tabular">
+              <span class="text-[2.75rem] tracking-[-0.045em]" data-time>
+                12:00
+              </span>
+              <span class="text-[1rem] font-medium text-ink-2" data-meridiem>
+                PM
+              </span>
+            </p>
+            <p class="mt-1.5 truncate text-[0.75rem] text-muted" data-date>
+              Tue, Oct 27
+            </p>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="mt-3 text-[0.875rem] text-ink" data-diff>New York is 9 h 30 min behind New Delhi</p>
+
+    <div class="mt-auto grid gap-1.5 pt-3">
+      <div class="widget-strip" data-strip="from"><span class="widget-now" data-now style="left: 50%"></span></div>
+      <div class="widget-strip" data-strip="to"></div>
+      <p class="mt-0.5 text-[0.6875rem] text-faint" data-overlap>Strips show one day; brighter means working hours.</p>
+    </div>
+  </div>
+</EmbedLayout>
+
+<script>
+  import { zoneByTz } from '../../data/zones';
+  import { pairPath } from '../../data/pairs';
+  import { dayShift, formatDurationShort, formatTime, offsetMinutes, wallParts, workingOverlap } from '../../lib/time';
+  import { dayPosition, hour12, readLabel, readTz, setText, stripsFor, tick, zoneTag } from '../../scripts/widget';
+
+  const from = readTz('from', 'Asia/Kolkata');
+  const to = readTz('to', 'America/New_York');
+  const labels = { from: readLabel('fromLabel', from), to: readLabel('toLabel', to) };
+  const tzs = { from, to };
+  const side = (k: 'from' | 'to', s: string) => document.querySelector<HTMLElement>(`[data-side="${k}"] [data-${s}]`)!;
+
+  document.title = `${labels.from} to ${labels.to} time difference | Timezone Prime`;
+  for (const k of ['from', 'to'] as const) {
+    setText(side(k, 'label'), labels[k]);
+    side(k, 'meridiem').hidden = !hour12;
+  }
+
+  const a = zoneByTz.get(from);
+  const b = zoneByTz.get(to);
+  const path = a && b ? pairPath(a, b) : null;
+  if (path) {
+    const credit = document.querySelector<HTMLAnchorElement>('[data-widget-credit]')!;
+    credit.href = new URL(path, credit.href).href;
+    setText(document.querySelector('[data-widget-credit-label]'), `${a!.abbr} to ${b!.abbr} converter \u2197`);
+  }
+
+  const dateFmt = (tz: string) => new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' });
+  const fmts = { from: dateFmt(from), to: dateFmt(to) };
+
+  tick((now) => {
+    for (const k of ['from', 'to'] as const) {
+      const p = wallParts(tzs[k], now);
+      const h = hour12 ? (p.hour % 12 === 0 ? 12 : p.hour % 12) : String(p.hour).padStart(2, '0');
+      setText(side(k, 'time'), `${h}:${String(p.minute).padStart(2, '0')}`);
+      setText(side(k, 'meridiem'), p.hour < 12 ? 'AM' : 'PM');
+      setText(side(k, 'date'), `${fmts[k].format(now)} · ${zoneTag(tzs[k], now)}`);
+    }
+
+    const diff = offsetMinutes(to, now) - offsetMinutes(from, now);
+    const shift = dayShift(now, from, to);
+    const dayNote = shift === 0 ? '' : shift > 0 ? ', already tomorrow' : ', still yesterday';
+    setText(
+      document.querySelector('[data-diff]'),
+      diff === 0
+        ? `${labels.to} and ${labels.from} are on the same time`
+        : `${labels.to} is ${formatDurationShort(diff)} ${diff > 0 ? 'ahead of' : 'behind'} ${labels.from}${dayNote}`,
+    );
+
+    const strips = stripsFor(from, to, now);
+    document.querySelector<HTMLElement>('[data-strip="from"]')!.style.backgroundImage = strips.from;
+    document.querySelector<HTMLElement>('[data-strip="to"]')!.style.backgroundImage = strips.to;
+    document.querySelector<HTMLElement>('[data-now]')!.style.left = `${dayPosition(from, now)}%`;
+
+    const p = wallParts(from, now);
+    const overlap = workingOverlap(from, to, p.year, p.month, p.day);
+    setText(
+      document.querySelector('[data-overlap]'),
+      overlap
+        ? `Shared 9 to 5: ${formatTime(overlap.start, from, hour12)} to ${formatTime(overlap.end, from, hour12)} in ${labels.from}`
+        : 'No shared 9 to 5 working hours today',
+    );
+  });
+</script>

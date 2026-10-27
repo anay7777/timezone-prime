@@ -71,7 +71,7 @@ export interface ZonePickerOptions {
 const MAX_RESULTS = 120;
 
 /** Browsers list some zones under their pre-rename IANA links. */
-const CURRENT_NAME: Record<string, string> = {
+export const CURRENT_NAME: Record<string, string> = {
   'Africa/Asmera': 'Africa/Asmara',
   'America/Buenos_Aires': 'America/Argentina/Buenos_Aires',
   'America/Catamarca': 'America/Argentina/Catamarca',

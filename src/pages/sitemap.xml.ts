@@ -14,6 +14,7 @@ export const GET: APIRoute = ({ site }) => {
   const entries: Entry[] = [
     { path: '/', changefreq: 'weekly', priority: 1 },
     { path: '/faq/', changefreq: 'monthly', priority: 0.7 },
+    { path: '/widgets/', changefreq: 'monthly', priority: 0.6 },
     { path: '/about/', changefreq: 'monthly', priority: 0.5 },
     { path: '/contact/', changefreq: 'monthly', priority: 0.4 },
     { path: '/privacy-policy/', changefreq: 'monthly', priority: 0.3 },

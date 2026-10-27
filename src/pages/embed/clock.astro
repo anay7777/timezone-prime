@@ -1,0 +1,73 @@
+---
+import EmbedLayout from '../../layouts/EmbedLayout.astro';
+
+const ticks = ['12a', '6a', '12p', '6p', '12a'];
+---
+
+<EmbedLayout title="Live clock | Timezone Prime" baseWidth={360} baseHeight={236}>
+  <div class="flex h-full flex-col">
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="truncate font-display text-[1.0625rem] tracking-tight text-ink" data-label>New Delhi</p>
+      <p class="shrink-0 font-mono text-[0.6875rem] text-muted tabular" data-tag>IST · UTC+5:30</p>
+    </div>
+
+    <p class="mt-1 flex items-baseline gap-1.5 font-display leading-none text-ink tabular" aria-live="off">
+      <span class="text-[3.375rem] tracking-[-0.045em]" data-time>12:00</span>
+      <span class="text-[1.125rem] tracking-tight text-muted" data-seconds hidden>:00</span>
+      <span class="ml-0.5 text-[1rem] font-medium text-ink-2" data-meridiem>PM</span>
+    </p>
+
+    <div class="mt-2 flex items-center justify-between gap-3 text-[0.8125rem]">
+      <p class="truncate" data-date>Tuesday, October 27</p>
+      <p class="flex shrink-0 items-center gap-1.5 text-muted">
+        <span class="widget-dot" data-dot></span><span data-band-label>Daytime</span>
+      </p>
+    </div>
+
+    <div class="mt-auto pt-3">
+      <div class="widget-strip" data-strip>
+        <span class="widget-now" data-now style="left: 50%"></span>
+      </div>
+      <div class="mt-1 flex justify-between font-mono text-[0.625rem] text-faint" aria-hidden="true" data-ticks>
+        {ticks.map((t) => <span>{t}</span>)}
+      </div>
+    </div>
+  </div>
+</EmbedLayout>
+
+<script>
+  import { wallParts } from '../../lib/time';
+  import { bandAt, bandLabel, dayPosition, hour12, params, readLabel, readTz, setText, stripsFor, tick, viewerTz, zoneTag } from '../../scripts/widget';
+
+  const tz = readTz('tz', viewerTz);
+  const label = readLabel('label', tz);
+  const showSeconds = params.get('seconds') === '1';
+  const $ = (s: string) => document.querySelector<HTMLElement>(`[data-${s}]`)!;
+
+  document.title = `Current time in ${label} | Timezone Prime`;
+  setText($('label'), label);
+  $('seconds').hidden = !showSeconds;
+  if (!hour12) {
+    $('meridiem').hidden = true;
+    $('ticks').replaceChildren(
+      ...['00', '06', '12', '18', '24'].map((t) => Object.assign(document.createElement('span'), { textContent: t })),
+    );
+  }
+
+  const dateFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric' });
+
+  tick((now) => {
+    const p = wallParts(tz, now);
+    const h = hour12 ? (p.hour % 12 === 0 ? 12 : p.hour % 12) : p.hour;
+    setText($('time'), `${hour12 ? h : String(h).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`);
+    setText($('seconds'), `:${String(new Date(now).getUTCSeconds()).padStart(2, '0')}`);
+    setText($('meridiem'), p.hour < 12 ? 'AM' : 'PM');
+    setText($('date'), dateFmt.format(now));
+    setText($('tag'), zoneTag(tz, now));
+    const band = bandAt(tz, now);
+    $('dot').dataset.band = band;
+    setText($('band-label'), bandLabel[band]);
+    $('strip').style.backgroundImage = stripsFor(tz, tz, now).from;
+    $('now').style.left = `${dayPosition(tz, now)}%`;
+  }, showSeconds);
+</script>

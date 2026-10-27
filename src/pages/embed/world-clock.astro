@@ -1,0 +1,77 @@
+---
+import EmbedLayout from '../../layouts/EmbedLayout.astro';
+---
+
+<EmbedLayout title="World clock | Timezone Prime" baseWidth={380} baseHeight={312}>
+  <div class="flex h-full flex-col">
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="truncate font-display text-[1.0625rem] tracking-tight text-ink" data-title>World clock</p>
+      <p class="shrink-0 text-[0.6875rem] text-muted" data-local></p>
+    </div>
+    <ul class="mt-2 flex-1 divide-y divide-rule-2 overflow-hidden" data-rows></ul>
+  </div>
+
+  <template data-row>
+    <li class="flex h-[3.25rem] items-center gap-3">
+      <span class="widget-dot" data-dot></span>
+      <span class="min-w-0 flex-1">
+        <span class="block truncate text-[0.9375rem] font-medium text-ink" data-city></span>
+        <span class="block truncate text-[0.6875rem] text-muted tabular" data-meta></span>
+      </span>
+      <span class="flex shrink-0 items-baseline gap-1 font-display leading-none text-ink tabular">
+        <span class="text-[1.625rem] tracking-[-0.04em]" data-time></span>
+        <span class="text-[0.75rem] font-medium text-ink-2" data-meridiem></span>
+      </span>
+    </li>
+  </template>
+</EmbedLayout>
+
+<script>
+  import { isValidTimeZone, wallParts } from '../../lib/time';
+  import { bandAt, bandLabel, hour12, params, setText, tick, viewerTz, zoneTag } from '../../scripts/widget';
+  import { cityLabel } from '../../data/widget-cities';
+  import { CURRENT_NAME } from '../../scripts/pickers';
+
+  const DEFAULT = ['America/New_York', 'Europe/London', 'Asia/Kolkata', 'Asia/Tokyo'];
+  const requested = (params.get('zones') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(isValidTimeZone)
+    .map((tz) => CURRENT_NAME[tz] ?? tz);
+  const tzs = [...new Set(requested.length ? requested : DEFAULT)].slice(0, 8);
+  const title = params.get('title')?.trim().slice(0, 40);
+  if (title) setText(document.querySelector('[data-title]'), title);
+
+  const template = document.querySelector<HTMLTemplateElement>('[data-row]')!;
+  const list = document.querySelector('[data-rows]')!;
+  const rows = tzs.map((tz) => {
+    const li = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    const q = (s: string) => li.querySelector<HTMLElement>(`[data-${s}]`)!;
+    setText(q('city'), cityLabel(tz));
+    q('meridiem').hidden = !hour12;
+    list.append(li);
+    return { tz, dot: q('dot'), meta: q('meta'), time: q('time'), meridiem: q('meridiem') };
+  });
+  document.documentElement.style.setProperty('--base-h', String((100 + 53 * rows.length) / 16));
+
+  const dayNum = (tz: string, now: number) => {
+    const p = wallParts(tz, now);
+    return Date.UTC(p.year, p.month - 1, p.day) / 86_400_000;
+  };
+  const relDay = (d: number) => (d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : d === -1 ? 'Yesterday' : d > 0 ? `+${d} days` : `${d} days`);
+
+  tick((now) => {
+    const today = dayNum(viewerTz, now);
+    setText(document.querySelector('[data-local]'), `Your time zone: ${cityLabel(viewerTz)}`);
+    for (const r of rows) {
+      const p = wallParts(r.tz, now);
+      const h = hour12 ? (p.hour % 12 === 0 ? 12 : p.hour % 12) : String(p.hour).padStart(2, '0');
+      setText(r.time, `${h}:${String(p.minute).padStart(2, '0')}`);
+      setText(r.meridiem, p.hour < 12 ? 'AM' : 'PM');
+      setText(r.meta, `${relDay(dayNum(r.tz, now) - today)} · ${zoneTag(r.tz, now)}`);
+      const band = bandAt(r.tz, now);
+      r.dot.dataset.band = band;
+      r.dot.title = bandLabel[band];
+    }
+  });
+</script>

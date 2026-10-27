@@ -1,0 +1,266 @@
+---
+import InfoLayout from '../layouts/InfoLayout.astro';
+import { widgetCities } from '../data/widget-cities';
+
+interface Widget {
+  id: 'clock' | 'compare' | 'world-clock';
+  name: string;
+  blurb: string;
+  width: number;
+}
+
+const widgets: Widget[] = [
+  { id: 'clock', name: 'Live clock', blurb: 'The current time in one city, with its place in the day.', width: 360 },
+  {
+    id: 'compare',
+    name: 'Time difference',
+    blurb: 'Two cities side by side with the gap between them and their shared working hours.',
+    width: 520,
+  },
+  { id: 'world-clock', name: 'World clock', blurb: 'Up to six cities at a glance, marked by working hours, day or night.', width: 380 },
+];
+
+const worldDefaults = ['America/New_York', 'Europe/London', 'Asia/Kolkata', 'Asia/Tokyo', '', ''];
+---
+
+<InfoLayout
+  title="Free Time Zone Widgets for Your Website | Timezone Prime"
+  description="Free live clock, world clock and time difference widgets you can embed on any website. Pick your cities, copy the code and paste it in."
+  heading="Free time zone widgets"
+  lead="Live clocks for your website, blog or dashboard. Pick the cities, copy one snippet, and paste it into your page. Daylight saving is handled for you."
+  crumb="Widgets"
+  path="/widgets/"
+>
+  {
+    widgets.map((w) => (
+      <section class="not-first:mt-16" aria-labelledby={`${w.id}-heading`} data-builder={w.id} data-width={w.width}>
+        <h2 id={`${w.id}-heading`} class="mt-0">
+          {w.name}
+        </h2>
+        <p>{w.blurb}</p>
+
+        <div class="mt-5 grid gap-4 sm:grid-cols-3">
+          {w.id === 'clock' && (
+            <label class="grid gap-1.5 text-sm sm:col-span-3">
+              City
+              <select class="field" data-opt="tz">
+                {widgetCities.map((c) => (
+                  <option value={c.tz} selected={c.tz === 'Asia/Kolkata'}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {w.id === 'compare' &&
+            (['from', 'to'] as const).map((k) => (
+              <label class="grid gap-1.5 text-sm sm:col-span-3">
+                {k === 'from' ? 'First city' : 'Second city'}
+                <select class="field" data-opt={k}>
+                  {widgetCities.map((c) => (
+                    <option value={c.tz} selected={c.tz === (k === 'from' ? 'Asia/Kolkata' : 'America/New_York')}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          {w.id === 'world-clock' &&
+            worldDefaults.map((tz, i) => (
+              <label class="grid gap-1.5 text-sm">
+                City {i + 1}
+                <select class="field" data-opt="zones">
+                  <option value="">None</option>
+                  {widgetCities.map((c) => (
+                    <option value={c.tz} selected={c.tz === tz}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          <label class="grid gap-1.5 text-sm">
+            Theme
+            <select class="field" data-opt="theme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="auto">Match visitor's system</option>
+            </select>
+          </label>
+          <label class="grid gap-1.5 text-sm">
+            Clock
+            <select class="field" data-opt="format">
+              <option value="12">12 hour</option>
+              <option value="24">24 hour</option>
+            </select>
+          </label>
+          {w.id === 'clock' && (
+            <label class="flex items-center gap-2 self-end pb-2.5 text-sm">
+              <input type="checkbox" class="h-4 w-4 accent-[var(--color-accent)]" data-opt="seconds" />
+              Show seconds
+            </label>
+          )}
+        </div>
+
+        <fieldset class="mt-4 grid gap-4 sm:grid-cols-3">
+          <legend class="sr-only">Size</legend>
+          <label class="grid gap-1.5 text-sm">
+            Size
+            <select class="field" data-size>
+              <option value="0.8">Small</option>
+              <option value="1" selected>Medium</option>
+              <option value="1.25">Large</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label class="grid gap-1.5 text-sm">
+            Width (px)
+            <input type="number" class="field tabular" min="200" max="1600" step="10" inputmode="numeric" data-w />
+          </label>
+          <label class="grid gap-1.5 text-sm">
+            Height (px)
+            <input type="number" class="field tabular" min="120" max="1200" step="10" inputmode="numeric" data-h />
+          </label>
+          <label class="flex items-center gap-2 text-sm sm:col-span-3">
+            <input type="checkbox" class="h-4 w-4 accent-[var(--color-accent)]" data-full />
+            Full width: stretch to fill the space it is placed in
+          </label>
+        </fieldset>
+
+        <div class="mt-6 overflow-x-auto rounded-card bg-paper-3 p-4 shadow-[var(--shadow-bed)] sm:p-6">
+          <iframe
+            src={`/embed/${w.id}/`}
+            title={`${w.name} widget preview`}
+            width={w.width}
+            height="240"
+            class="mx-auto block max-w-full rounded-2xl border-0"
+            data-preview
+          ></iframe>
+        </div>
+
+        <label class="mt-5 grid gap-1.5 text-sm">
+          Embed code
+          <textarea class="field min-h-36 resize-y font-mono text-xs leading-relaxed" readonly spellcheck="false" data-code></textarea>
+        </label>
+        <div class="mt-3 flex items-center gap-3">
+          <button type="button" class="btn btn-primary btn-sm" data-copy>
+            Copy code
+          </button>
+          <span class="text-sm text-muted" role="status" data-copied></span>
+        </div>
+      </section>
+    ))
+  }
+
+  <h2>How to add a widget</h2>
+  <ul>
+    <li>Choose your cities and options above, then select <strong>Copy code</strong>.</li>
+    <li>Paste the code into your page's HTML where the widget should appear. In WordPress, use a Custom HTML block.</li>
+    <li>The widget keeps itself up to date, including daylight saving changes, with nothing to install.</li>
+  </ul>
+  <p>
+    The widgets are free for personal and commercial sites. Please keep the Timezone Prime credit in place. Questions or a
+    widget idea? <a href="/contact/" data-astro-reload>Contact us</a>.
+  </p>
+</InfoLayout>
+
+<script>
+  import { siteUrl } from '../lib/site';
+  import { cityLabel } from '../data/widget-cities';
+
+  const heights = {
+    clock: () => 236,
+    compare: () => 252,
+    'world-clock': (n: number) => 100 + 53 * Math.max(n, 1),
+  };
+
+  for (const section of document.querySelectorAll<HTMLElement>('[data-builder]')) {
+    const id = section.dataset.builder as keyof typeof heights;
+    const width = Number(section.dataset.width);
+    const preview = section.querySelector<HTMLIFrameElement>('[data-preview]')!;
+    const code = section.querySelector<HTMLTextAreaElement>('[data-code]')!;
+    const status = section.querySelector<HTMLElement>('[data-copied]')!;
+    const opts = [...section.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-opt]')];
+    const sizeSel = section.querySelector<HTMLSelectElement>('[data-size]')!;
+    const wInput = section.querySelector<HTMLInputElement>('[data-w]')!;
+    const hInput = section.querySelector<HTMLInputElement>('[data-h]')!;
+    const full = section.querySelector<HTMLInputElement>('[data-full]')!;
+    const clamp = (el: HTMLInputElement, fallback: number) => {
+      const n = Math.round(Number(el.value));
+      return Number.isFinite(n) && n > 0 ? Math.min(Math.max(n, Number(el.min)), Number(el.max)) : fallback;
+    };
+    const zoneCount = () =>
+      new Set(opts.filter((el) => el.dataset.opt === 'zones' && el.value).map((el) => el.value)).size;
+    const applyPreset = () => {
+      if (sizeSel.value === 'custom') return;
+      const s = Number(sizeSel.value);
+      wInput.value = String(Math.round(width * s));
+      hInput.value = String(Math.round(heights[id](zoneCount()) * s));
+    };
+
+    const update = () => {
+      const q = new URLSearchParams();
+      const zones: string[] = [];
+      for (const el of opts) {
+        const key = el.dataset.opt!;
+        if (key === 'zones') {
+          if (el.value) zones.push(el.value);
+        } else if (el instanceof HTMLInputElement && el.type === 'checkbox') {
+          if (el.checked) q.set(key, '1');
+        } else if (!(key === 'theme' && el.value === 'dark') && !(key === 'format' && el.value === '12')) {
+          q.set(key, el.value);
+        }
+      }
+      const unique = [...new Set(zones)];
+      if (id === 'world-clock') q.set('zones', unique.join(','));
+      const query = q.toString().replace(/%2F/g, '/').replace(/%2C/g, ',');
+      const path = `/embed/${id}/${query ? `?${query}` : ''}`;
+      const w = clamp(wInput, width);
+      const height = clamp(hInput, heights[id](unique.length));
+      const widthAttr = full.checked ? '100%' : String(w);
+      wInput.disabled = full.checked;
+      const title =
+        id === 'clock'
+          ? `Current time in ${cityLabel(q.get('tz') ?? '')}`
+          : id === 'compare'
+            ? `Time difference between ${cityLabel(q.get('from') ?? '')} and ${cityLabel(q.get('to') ?? '')}`
+            : 'World clock';
+
+      if (preview.getAttribute('src') !== path) preview.src = path;
+      preview.width = widthAttr;
+      preview.height = String(height);
+      code.value = [
+        `<iframe src="${siteUrl}${path}" title="${title}" width="${widthAttr}" height="${height}" style="border:0;border-radius:16px;max-width:100%" loading="lazy"></iframe>`,
+        `<p style="margin:4px 0 0;font:12px/1.4 system-ui,sans-serif">Time zone widget by <a href="${siteUrl}/">Timezone Prime</a></p>`,
+      ].join('\n');
+      status.textContent = '';
+    };
+
+    for (const el of opts)
+      el.addEventListener('change', () => {
+        if (el.dataset.opt === 'zones') applyPreset();
+        update();
+      });
+    sizeSel.addEventListener('change', () => {
+      applyPreset();
+      update();
+    });
+    for (const el of [wInput, hInput])
+      el.addEventListener('input', () => {
+        sizeSel.value = 'custom';
+        update();
+      });
+    full.addEventListener('change', update);
+    section.querySelector('[data-copy]')!.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(code.value);
+        status.textContent = 'Copied';
+      } catch {
+        code.select();
+        status.textContent = 'Press Ctrl+C to copy';
+      }
+    });
+    applyPreset();
+    update();
+  }
+</script>

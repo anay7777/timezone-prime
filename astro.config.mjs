@@ -54,5 +54,5 @@ export default defineConfig({
     plugins: [tailwindcss(), devTrailingSlashRedirect()],
   },
 
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !page.includes('/embed/') })],
 });
