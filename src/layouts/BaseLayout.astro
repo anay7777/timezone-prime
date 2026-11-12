@@ -8,6 +8,8 @@ import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import { contactEmail, organizationId, siteName, siteUrl, websiteId } from '../lib/site';
+import { generalKeywords } from '../lib/seo';
 
 interface Props {
   title: string;
@@ -16,6 +18,8 @@ interface Props {
   ogImageAlt?: string;
   keywords?: string[];
   noindex?: boolean;
+  /** Path of a Markdown copy of this page, for AI crawlers and LLM tools. */
+  markdownPath?: string;
 }
 
 const {
@@ -25,10 +29,37 @@ const {
   ogImageAlt = 'Timezone Prime time zone converter showing two clocks over a day ribbon of working hours',
   keywords = [],
   noindex = false,
+  markdownPath,
 } = Astro.props;
 const site = Astro.site ?? new URL('https://timezoneprime.com');
 const canonical = new URL(Astro.url.pathname, site).href;
 const ogImage = new URL('/og.png', site).href;
+
+const siteGraph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': organizationId,
+      name: siteName,
+      url: `${siteUrl}/`,
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/icon-512.png`, width: 512, height: 512 },
+      email: contactEmail,
+      contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: contactEmail, url: `${siteUrl}/contact/` },
+      description: 'Free time zone converter that applies the IANA time zone rules, including daylight saving, for any date.',
+      knowsAbout: ['Time zones', 'Daylight saving time', 'UTC offsets', 'IANA time zone database', 'Time zone conversion'],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      name: siteName,
+      url: `${siteUrl}/`,
+      inLanguage: 'en',
+      publisher: { '@id': organizationId },
+      keywords: generalKeywords.join(', '),
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -66,6 +97,7 @@ const ogImage = new URL('/og.png', site).href;
     <link rel="icon" href="/icon-192.png?v=2" sizes="192x192" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    {markdownPath && <link rel="alternate" type="text/markdown" href={markdownPath} title={`${title} (Markdown)`} />}
     <meta name="theme-color" content="#000519" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Timezone Prime" />
@@ -85,7 +117,7 @@ const ogImage = new URL('/og.png', site).href;
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={ogImageAlt} />
-    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+    {[siteGraph, ...jsonLd].map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
   </head>
   <body class="flex flex-col overflow-x-clip antialiased">
     <a

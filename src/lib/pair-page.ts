@@ -12,7 +12,7 @@ import {
   type Season,
 } from './pair-content';
 import { formatDuration, formatDurationShort, yearOffsets } from './time';
-import { keywordTimes, pairPlaces, pairSeo, questionIntents } from './seo';
+import { keywordTimes, pairSeo, questionIntents } from './seo';
 
 export interface Faq {
   q: string;
@@ -166,6 +166,5 @@ export function pairPageData(pair: Pair, now: number) {
     title,
     description,
     faqs,
-    citySample: seo ? pairPlaces(seo.keywords).slice(0, 3) : [],
   };
 }

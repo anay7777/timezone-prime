@@ -1,6 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import { siteName, siteUrl } from '../lib/site';
+import { organizationId, siteUrl, websiteId } from '../lib/site';
 
 interface Props {
   title: string;
@@ -38,7 +38,8 @@ const jsonLd = [
     url,
     description,
     inLanguage: 'en',
-    isPartOf: { '@type': 'WebSite', name: siteName, url: `${siteUrl}/` },
+    isPartOf: { '@id': websiteId },
+    publisher: { '@id': organizationId },
     ...(updated ? { dateModified: updated } : {}),
   },
 ];

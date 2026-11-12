@@ -72,7 +72,7 @@ export function keywordTimes(k: PairKeywords): number[] {
 }
 
 const ABBRS = new Set(Object.keys(zoneSeo));
-const UPPER_WORDS = new Set(['uae', 'dc', 'usa', ...ABBRS]);
+const UPPER_WORDS = new Set(['uae', 'dc', 'usa', 'edt', 'cdt', 'mdt', 'pdt', 'et', 'ct', 'mt', 'pt', 'bst', 'cest', 'aedt', ...ABBRS]);
 
 export function titleCase(text: string): string {
   return text
@@ -89,12 +89,39 @@ export function zonePlaces(z: ZoneSeo): string[] {
   });
 }
 
-/** City pairs from keywords like "new york to delhi time". */
-export function pairPlaces(k: PairKeywords): { from: string; to: string }[] {
-  return k.places.flatMap((kw) => {
-    const m = kw.match(/^(.+?) to (.+?) time$/);
-    return m && !m[1].endsWith(' time') && !ABBRS.has(m[1]) ? [{ from: titleCase(m[1]), to: titleCase(m[2]) }] : [];
-  });
+export interface PairSides {
+  from: string[];
+  to: string[];
+}
+
+function sides(pairsOfWords: [string, string][]): PairSides {
+  const from = new Set<string>();
+  const to = new Set<string>();
+  for (const [a, b] of pairsOfWords) {
+    from.add(titleCase(a));
+    to.add(titleCase(b));
+  }
+  return { from: [...from], to: [...to] };
+}
+
+/** Other names for each side, from keywords like "indian standard time to new york time". */
+export function pairSideNames(k: PairKeywords): PairSides {
+  return sides(
+    [...k.aliases, ...k.fullNames].flatMap((kw): [string, string][] => {
+      const m = kw.replace(/ converter$/, '').match(/^(.+) to (.+)$/);
+      return m ? [[m[1], m[2]]] : [];
+    }),
+  );
+}
+
+/** Cities, states and countries on each side, from keywords like "delhi time to new york time". */
+export function pairSidePlaces(k: PairKeywords): PairSides {
+  return sides(
+    k.places.flatMap((kw): [string, string][] => {
+      const m = kw.replace(/ time( difference)?$/, '').match(/^(.+?)(?: time)? to (.+)$/);
+      return m && !ABBRS.has(m[1]) && !ABBRS.has(m[2]) ? [[m[1], m[2]]] : [];
+    }),
+  );
 }
 
 export type QuestionKind = 'ahead' | 'daylight' | 'time' | 'place';

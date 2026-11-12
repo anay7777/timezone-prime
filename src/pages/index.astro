@@ -7,6 +7,7 @@ import { pairsBySource } from '../data/pairs';
 import { offsetsSummary } from '../lib/pair-content';
 import { generalFaqs, zoneGlance } from '../lib/general-faqs';
 import { allZoneKeywords, generalKeywords, landingMetaKeywords } from '../lib/seo';
+import { organizationId, websiteId } from '../lib/site';
 
 const title = 'Time Zone Converter with Daylight Saving | Timezone Prime';
 const description =
@@ -22,28 +23,14 @@ const faqs = generalFaqs;
 const jsonLd = [
   {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Timezone Prime',
-    url: `${site}/`,
-    description,
-    inLanguage: 'en',
-    keywords: generalKeywords.join(', '),
-  },
-  {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Timezone Prime',
-    url: `${site}/`,
-    logo: `${site}/icon-512.png`,
-  },
-  {
-    '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: title,
     url: `${site}/`,
     description,
     inLanguage: 'en',
-    isPartOf: { '@type': 'WebSite', name: 'Timezone Prime', url: `${site}/` },
+    isPartOf: { '@id': websiteId },
+    publisher: { '@id': organizationId },
+    dateModified: new Date(now).toISOString(),
     about: glance.map((g) => ({
       '@type': 'Thing',
       name: g.zone.name,

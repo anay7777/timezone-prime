@@ -9,6 +9,8 @@ import { offsetsSummary, periodLabel } from '../lib/pair-content';
 import { aliasText, pairPageData, zoneLabel } from '../lib/pair-page';
 import { formatDurationShort } from '../lib/time';
 import { allPairKeywords, pairMetaKeywords } from '../lib/seo';
+import { pairMarkdownPath, pairSynonymText } from '../lib/geo';
+import { organizationId, websiteId } from '../lib/site';
 
 export const getStaticPaths = (() => pairs.map((p) => ({ params: { pair: p.slug }, props: { pair: p } }))) satisfies GetStaticPaths;
 
@@ -37,9 +39,11 @@ const {
   title,
   description,
   faqs,
-  citySample,
 } = pairPageData(pair, now);
 const keywords = seo ? pairMetaKeywords(seo.keywords) : [];
+const synonyms = pairSynonymText(pair);
+const updatedIso = new Date(now).toISOString();
+const updatedLabel = new Date(now).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
 const reverse = pairPath(B, A);
 const sameSource = pairs.filter((p) => p.from.slug === A.slug && p.slug !== pair.slug);
@@ -64,6 +68,7 @@ const jsonLd = [
     isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     description,
+    publisher: { '@id': organizationId },
     ...(seo && {
       alternateName: seo.keywords.aliases
         .filter((k) => !k.endsWith('converter'))
@@ -77,8 +82,12 @@ const jsonLd = [
     url: `${site}/${pair.slug}/`,
     description,
     inLanguage: 'en',
-    isPartOf: { '@type': 'WebSite', name: 'Timezone Prime', url: `${site}/` },
-    about: [A, B].map((z) => ({ '@type': 'Thing', name: z.name, alternateName: aliasText(z) })),
+    isPartOf: { '@id': websiteId },
+    publisher: { '@id': organizationId },
+    dateModified: updatedIso,
+    about: [A, B].map((z) => ({ '@type': 'Thing', name: z.name, alternateName: aliasText(z), identifier: z.tz })),
+    speakable: { '@type': 'SpeakableSpecification', cssSelector: ['#pair-facts', '#pair-faq'] },
+    citation: { '@type': 'Dataset', name: 'IANA Time Zone Database', url: 'https://www.iana.org/time-zones' },
     ...(seo && { keywords: allPairKeywords(seo.keywords).join(', ') }),
   },
   {
@@ -89,7 +98,7 @@ const jsonLd = [
 ];
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd} keywords={keywords}>
+<BaseLayout title={title} description={description} jsonLd={jsonLd} keywords={keywords} markdownPath={pairMarkdownPath(pair)}>
   <div class="hero-ground">
   <div class="container-page pt-4 sm:pt-10">
     <nav aria-label="Breadcrumb" class="text-sm text-muted">
@@ -114,7 +123,7 @@ const jsonLd = [
   </div>
   <div class="container-page">
 
-    <dl class="mt-10 grid gap-x-10 gap-y-6 border-t border-rule pt-8 md:grid-cols-3">
+    <dl id="pair-facts" class="mt-10 grid gap-x-10 gap-y-6 border-t border-rule pt-8 md:grid-cols-3">
       <div>
         <dt class="text-sm text-muted">Time difference</dt>
         <dd class="mt-1.5 text-[0.9375rem] text-ink">{differenceSummary}</dd>
@@ -128,13 +137,10 @@ const jsonLd = [
         <dd class="mt-1.5 text-[0.9375rem] text-ink">{dstSummary}</dd>
       </div>
     </dl>
-    {
-      citySample.length > 0 && (
-        <p class="mt-6 text-[0.9375rem]">
-          The same conversion works for every city on these clocks, such as {citySample.map((c, i) => `${c.from} to ${c.to}${i < citySample.length - 2 ? ', ' : i === citySample.length - 2 ? ' and ' : ''}`)}.
-        </p>
-      )
-    }
+    {synonyms.length > 0 && <p class="mt-6 text-[0.9375rem]">{synonyms.join(' ')}</p>}
+    <p class="mt-4 font-mono text-sm text-muted">
+      Updated <time datetime={updatedIso}>{updatedLabel}</time> from the IANA time zone database ({A.tz}, {B.tz}).
+    </p>
   </div>
 
   <WorldMap from={A.tz} to={B.tz} heading={`Where ${label(A)} and ${label(B)} apply`} />
@@ -282,7 +288,7 @@ const jsonLd = [
   <section class="container-page mt-24 sm:mt-32" aria-labelledby="faq-heading">
     <div class="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
       <h2 id="faq-heading" class="text-heading">{label(A)} and {label(B)}, answered</h2>
-      <div class="grid gap-6">
+      <div id="pair-faq" class="grid gap-6">
         {
           faqs.map((f) => (
             <div class="border-b border-rule-2 pb-6">

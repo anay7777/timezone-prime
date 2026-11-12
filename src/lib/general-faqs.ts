@@ -1,6 +1,7 @@
 import { pairsBySource } from '../data/pairs';
 import { zoneBySlug } from '../data/zones';
-import type { Faq } from './pair-page';
+import { offsetsSummary } from './pair-content';
+import { aliasText, type Faq } from './pair-page';
 import { zonePlaces, zoneSeo } from './seo';
 
 /** The zones in the keyword file, with the places that use them and a pair page to link to. */
@@ -58,6 +59,34 @@ export const generalFaqs: Faq[] = [
     a: 'The live converter and the map need JavaScript. The pages for each pair still show their reference tables, the periods when the gap changes and the upcoming clock change dates without it.',
   },
 ];
+
+/** Places in the keyword file whose answer is not simply "uses the zone it is listed under". */
+const placeAnswers: Record<string, string> = {
+  florida:
+    'Most of Florida, including Miami, Orlando and Tampa, is on Eastern Time (EST/EDT). The western Panhandle, west of the Apalachicola River, including Pensacola, is on Central Time (CST/CDT).',
+  texas:
+    'Most of Texas, including Houston, Dallas, San Antonio and Austin, is on Central Time (CST/CDT). El Paso and Hudspeth counties in the far west use Mountain Time (MST/MDT).',
+  arizona:
+    'Most of Arizona stays on Mountain Standard Time (MST, UTC\u22127) all year and does not switch to daylight saving time, so in summer it matches Pacific Daylight Time. The Navajo Nation in the north-east of the state does observe daylight saving.',
+  phoenix:
+    'Phoenix is on Mountain Standard Time (MST, UTC\u22127) all year, because Arizona does not observe daylight saving time. From March to November it shows the same time as Los Angeles; the rest of the year it matches Denver.',
+  greenwich:
+    'Greenwich, in London, follows UK time: Greenwich Mean Time (GMT, UTC+0) in winter and British Summer Time (BST, UTC+1) from the last Sunday in March to the last Sunday in October.',
+  europe:
+    'Europe spans several time zones. Most of continental Europe, including Germany, France, Spain, Italy, the Netherlands and Poland, uses Central European Time (CET, UTC+1, and CEST, UTC+2, in summer). The UK, Ireland and Portugal are one hour behind that, and Finland, Greece and Romania are one hour ahead.',
+  australia:
+    'Australia has three main time zones. New South Wales, Victoria, Tasmania, the ACT and Queensland use Australian Eastern Time (AEST, UTC+10), and all but Queensland move to AEDT (UTC+11) from October to April. South Australia and the Northern Territory use Australian Central Time (UTC+9:30), and Western Australia uses AWST (UTC+8).',
+};
+
+/** One answer per "what time zone is ..." keyword. */
+export function zoneFaqs(now: number): Faq[] {
+  return zoneGlance().flatMap(({ zone, places }) =>
+    places.map((place) => ({
+      q: `What time zone is ${place} in?`,
+      a: placeAnswers[place.toLowerCase()] ?? `${place} is on ${zone.name} (${aliasText(zone)}), ${offsetsSummary(zone, now)}.`,
+    })),
+  );
+}
 
 export function faqPageJsonLd(faqs: Faq[]) {
   return {
